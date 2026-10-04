@@ -1,0 +1,922 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   __BRAND__ admin console (full restyle) — keycloak-theme skill STARTER
+   ───────────────────────────────────────────────────────────────────────────
+   This file is the keycloak-theme skill's starter, copied into the project and
+   then filled in. What to fill in:
+
+     1. The `--p-*` VALUES in `:root` — the SAME values as account.css. The
+        names are shared with login and account; keep them.
+     2. The admin-only roles: --p-sidebar* (light or dark sidebar, decided
+        from the palette) and the --p-radius* scale.
+     3. The three @font-face files in ../fonts/ (`__FONT_UI_400__` etc.).
+
+   Every ⚠️ was a visible defect measured on Keycloak 26.6.1. Background, the
+   "brand only" alternative and the procedure: references/admin.md.
+
+   ── How this retints an app we do not own ──────────────────────────────────
+   keycloak.v2/admin is a PatternFly v5 React app. PatternFly draws from
+   `--pf-v5-global--*` custom properties declared on `:where(:root)` — zero
+   specificity — so the plain `:root` below wins, and the retint is a token
+   swap. The mapped list is the 97 colour/shadow/radius/font tokens the
+   console's own main-*.css defines (242 globals in all; the rest are spacing,
+   type sizes and the raw palette), read out of the 26.6.1 stylesheet, not
+   recalled. Re-read
+   it after a Keycloak upgrade:
+       grep -o -- '--pf-v5-global--[A-Za-z0-9_-]*:' main-*.css | sort -u
+   (main-*.css is under theme/keycloak.v2/admin/resources/assets/ in
+   org.keycloak.keycloak-admin-ui-*.jar).
+
+   The component section below the mapping is for what tokens cannot reach:
+   the dark-by-default sidebar and masthead, form-control pseudo-borders,
+   joined input groups, and PatternFly's raw-palette fallbacks (blue labels).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ───────────────────────────────────────────────────────────────────
+   Self-hosted, the same files as login and account, copied into ../fonts/.
+   The console ships Red Hat Text/Display; these replace it through the
+   FontFamily tokens. No CDN. */
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/__FONT_UI_400__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 600; font-display: swap; src: url('../fonts/__FONT_UI_600__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/__FONT_UI_700__.woff2') format('woff2'); }
+
+/* ── Palette ─────────────────────────────────────────────────────────────────
+   The account console's block, value for value (copy it from account.css),
+   plus the admin-only roles at the end. The values below are NEUTRAL STARTER
+   DEFAULTS (slate + indigo); ratios are measured against --p-canvas.
+
+   ⚠️ ONE DIFFERENCE IN THE MAPPING, not in the palette: account maps
+   BackgroundColor--100 to the page ground (--p-surface) and then repaints
+   cards by hand. The admin console spends --100 on far more surfaces — tables,
+   toolbars, modals, menus, drawers, wizards, form fields — so here --100 is the
+   CARD (--p-canvas) and the page ground comes from light-300 / --200, which is
+   where PatternFly itself takes it (`--pf-v5-c-page--BackgroundColor`). */
+:root {
+    --p-canvas:      #FFFFFF;   /* SOURCE: ?  — cards, tables, modals; the reference ground for every ratio */
+    --p-surface:     #E2E8F0;   /* SOURCE: ?  — the PAGE ground, one step darker than --p-canvas  */
+    --p-raised:      #FFFFFF;   /* SOURCE: ?  — FIELDS; must track the app's input background     */
+    --p-quiet:       #F1F5F9;   /* SOURCE: ?  — read-only fields, zebra; --p-text-3 ≥ 4.5:1 on it (6.92) */
+    --p-sunken:      #E2E8F0;   /* SOURCE: ?  — quiet fills, hover                                */
+    --p-border:      #CBD5E1;   /* SOURCE: ?  — hairline borders, decorative                      */
+    --p-border-mid:  #64748B;   /* SOURCE: ?  — field/control borders, ≥ 3:1 non-text (4.76)      */
+    --p-line:        #E2E8F0;   /* SOURCE: ?  — hairlines between rows                            */
+    --p-text:        #0F172A;   /* SOURCE: ?  — body ink (17.85)                                  */
+    --p-text-2:      #334155;   /* SOURCE: ?  — secondary ink (10.35)                             */
+    --p-text-3:      #475569;   /* SOURCE: ?  — tertiary ink, ≥ 4.5:1 on card AND page (7.58 / 6.15) */
+    --p-text-faint:  #94A3B8;   /* SOURCE: ?  — decorative only, never text (2.56)                */
+    --p-accent:      #4338CA;   /* SOURCE: ?  — primary brand colour (7.90)                       */
+    --p-accent-text: #4338CA;   /* SOURCE: ?  — links, primary fills; ≥ 4.5:1 as ink and under --p-ink */
+    --p-accent-hi:   #312E81;   /* SOURCE: ?  — hover / pressed (11.42)                           */
+    --p-accent-soft: #E0E7FF;   /* SOURCE: ?  — quiet accent fills (selected rows, blue labels)   */
+    --p-ink:         #FFFFFF;   /* SOURCE: ?  — text ON the accent (7.90)                         */
+    --p-focus:       #4338CA;   /* SOURCE: ?  — focus border, ≥ 3:1 non-text                      */
+    --p-focus-ring:  0 0 0 3px color-mix(in srgb, var(--p-focus) 25%, transparent);
+    --p-online:      #16A34A;   /* SOURCE: ?  — success fills, icons, borders (3.30)              */
+    --p-online-text: #166534;   /* SOURCE: ?  — success INK (7.13)                                */
+    --p-warn:        #F59E0B;   /* SOURCE: ?  — warning fills, icons, borders; also the temporary-admin banner ground */
+    --p-warn-text:   #92400E;   /* SOURCE: ?  — warning INK (7.09)                                */
+    --p-alert:       #EF4444;   /* SOURCE: ?  — error rules and borders only (3.76)               */
+    --p-alert-text:  #B91C1C;   /* SOURCE: ?  — error ink AND destructive fill (6.47 both ways)   */
+    --p-alert-hi:    #7F1D1D;   /* SOURCE: ?  — destructive :hover (10.02)                        */
+
+    /* The brand bar, as in account.css. ⚠️ The logo must contrast with it. */
+    --p-masthead:      var(--p-accent);   /* SOURCE: ?  — the app header's background          */
+    --p-masthead-ink:  var(--p-ink);      /* SOURCE: ?  — text/icons on the bar, ≥ 4.5:1 on it  */
+
+    /* ── Admin-only roles ───────────────────────────────────────────────────
+       The SIDEBAR. PatternFly's page sidebar and nav are DARK by default
+       (#212427, white links) and the console does not opt into `pf-m-light`,
+       so on a light palette the stock sidebar is a black slab beside a light
+       page. Decide from the palette, out loud:
+         light sidebar (default here): --p-sidebar = --p-canvas, ink = text-2
+         dark sidebar (an app with a dark rail): --p-sidebar = its rail colour,
+           --p-sidebar-ink a light ink — and re-measure all three pairs.
+       Hover and current-item fills are DERIVED by mixing the ink into the
+       ground, so they work for either polarity without more tokens. */
+    --p-sidebar:        var(--p-canvas);  /* SOURCE: ?  — sidebar ground                            */
+    --p-sidebar-ink:    var(--p-text-2);  /* SOURCE: ?  — nav links, ≥ 4.5:1 on --p-sidebar (10.35) */
+    --p-sidebar-ink-2:  var(--p-text-3);  /* SOURCE: ?  — section titles, ≥ 4.5:1 (7.58)            */
+    --p-sidebar-accent: var(--p-accent);  /* SOURCE: ?  — current-item rule, ≥ 3:1 non-text (7.90)  */
+
+    /* Shapes. The console is DENSE (toolbars of joined controls, table rows,
+       stacked form fields), so the starter keeps the account radii for
+       controls but they are tokens here: a very round project may want
+       --p-radius smaller in the admin than on login. */
+    --p-radius-sm:   8px;    /* SOURCE: ?  — labels, chips, small buttons */
+    --p-radius:      12px;   /* SOURCE: ?  — fields, buttons, menu toggles */
+    --p-radius-lg:   16px;   /* SOURCE: ?  — menus, popovers, alerts       */
+    --p-radius-xl:   20px;   /* SOURCE: ?  — cards, modals                 */
+
+    --p-font-head:   '__FONT_HEAD__', '__FONT_UI__', sans-serif;  /* SOURCE: ?  — headings, labels */
+    --p-font-ui:     '__FONT_UI__', sans-serif;                   /* SOURCE: ?  — running UI text  */
+    --p-font-mono:   ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* ── PatternFly v5 globals → the palette ───────────────────────────────
+       Stock values (26.6.1) in comments where the mapping is not obvious. */
+    /* Grounds. See the ⚠️ above the palette for why --100 is the card here. */
+    --pf-v5-global--BackgroundColor--100: var(--p-canvas);      /* #fff     */
+    --pf-v5-global--BackgroundColor--150: var(--p-quiet);       /* #fafafa  */
+    --pf-v5-global--BackgroundColor--200: var(--p-surface);     /* #f0f0f0  */
+    --pf-v5-global--BackgroundColor--300: var(--p-sunken);
+    --pf-v5-global--BackgroundColor--400: var(--p-quiet);
+    --pf-v5-global--BackgroundColor--light-100: var(--p-canvas);   /* #fff    */
+    --pf-v5-global--BackgroundColor--light-200: var(--p-quiet);    /* #fafafa */
+    --pf-v5-global--BackgroundColor--light-300: var(--p-surface);  /* #f0f0f0 — the PAGE ground */
+    /* ⚠️ The light-* / dark-* families name the GROUND a value is for, not a
+       mode and not a shade (see references/account.md). Dark grounds carry
+       light ink: tooltips, popover headers. They must stay genuinely dark. */
+    --pf-v5-global--BackgroundColor--dark-100: var(--p-text);
+    --pf-v5-global--BackgroundColor--dark-200: var(--p-text-2);
+    --pf-v5-global--BackgroundColor--dark-300: var(--p-text-2);
+    --pf-v5-global--BackgroundColor--dark-400: var(--p-text-3);
+    --pf-v5-global--BackgroundColor--dark-transparent-100: color-mix(in srgb, var(--p-text) 62%, transparent);
+    --pf-v5-global--BackgroundColor--dark-transparent-200: color-mix(in srgb, var(--p-text) 42%, transparent);
+
+    --pf-v5-global--Color--100: var(--p-text);
+    --pf-v5-global--Color--200: var(--p-text-2);
+    --pf-v5-global--Color--300: var(--p-text-3);
+    --pf-v5-global--Color--400: var(--p-text-3);
+    --pf-v5-global--Color--light-100: var(--p-ink);   /* light INK, for dark grounds */
+    --pf-v5-global--Color--light-200: var(--p-ink);
+    --pf-v5-global--Color--light-300: var(--p-ink);
+    --pf-v5-global--Color--dark-100: var(--p-text);   /* dark INK, for light grounds */
+    --pf-v5-global--Color--dark-200: var(--p-text-2);
+
+    /* ⚠️ In this PatternFly build --200 is the MID border (#8a8d90: the
+       text-input-group underline, control edges) and --300 the LIGHTEST
+       (#f0f0f0: dividers, nav rules). Mapped by what they are, not by number. */
+    --pf-v5-global--BorderColor--100: var(--p-border);      /* #d2d2d2 */
+    --pf-v5-global--BorderColor--200: var(--p-border-mid);  /* #8a8d90 */
+    --pf-v5-global--BorderColor--300: var(--p-line);        /* #f0f0f0 */
+    --pf-v5-global--BorderColor--400: var(--p-border-mid);
+    --pf-v5-global--BorderColor--light-100: var(--p-border);
+    --pf-v5-global--BorderColor--dark-100: var(--p-border);
+
+    --pf-v5-global--primary-color--100: var(--p-accent-text);
+    --pf-v5-global--primary-color--200: var(--p-accent-hi);
+    --pf-v5-global--primary-color--300: var(--p-accent-text);
+    --pf-v5-global--primary-color--400: var(--p-accent-hi);
+    --pf-v5-global--primary-color--light-100: var(--p-accent-soft);  /* #73bcf7 — sits on DARK grounds */
+    --pf-v5-global--primary-color--dark-100: var(--p-accent-text);
+    --pf-v5-global--secondary-color--100: var(--p-text-2);
+    --pf-v5-global--active-color--100: var(--p-accent);
+    --pf-v5-global--active-color--200: var(--p-accent-soft);         /* #bee1f4 — a pale fill */
+    --pf-v5-global--active-color--300: var(--p-accent);
+    --pf-v5-global--active-color--400: var(--p-accent-soft);
+    /* "custom" (teal) — the cyan label/alert variant. Folded into the accent
+       ramp: 100 tone, 200 ink, 300 deep. */
+    --pf-v5-global--custom-color--100: var(--p-accent-soft);
+    --pf-v5-global--custom-color--200: var(--p-accent-text);
+    --pf-v5-global--custom-color--300: var(--p-accent-hi);
+
+    --pf-v5-global--link--Color: var(--p-accent-text);
+    --pf-v5-global--link--Color--hover: var(--p-accent-hi);
+    --pf-v5-global--link--Color--visited: var(--p-accent-text);
+    /* --light links sit on DARK grounds (tooltips): they need a light tone. */
+    --pf-v5-global--link--Color--light: var(--p-accent-soft);
+    --pf-v5-global--link--Color--light--hover: var(--p-ink);
+    --pf-v5-global--link--Color--dark: var(--p-accent-text);
+    --pf-v5-global--link--Color--dark--hover: var(--p-accent-hi);
+
+    /* ⚠️ Status: `--200` is the INK (label text, alert titles), `--100` the
+       icon and border tone. A contrast fix mapped onto --100 fixes nothing. */
+    --pf-v5-global--danger-color--100: var(--p-alert-text);
+    --pf-v5-global--danger-color--200: var(--p-alert-hi);
+    --pf-v5-global--danger-color--300: var(--p-alert-hi);
+    --pf-v5-global--success-color--100: var(--p-online);
+    --pf-v5-global--success-color--200: var(--p-online-text);
+    --pf-v5-global--warning-color--100: var(--p-warn);
+    --pf-v5-global--warning-color--200: var(--p-warn-text);
+    --pf-v5-global--info-color--100: var(--p-accent);
+    --pf-v5-global--info-color--200: var(--p-accent-hi);
+
+    --pf-v5-global--disabled-color--100: var(--p-text-3);
+    --pf-v5-global--disabled-color--200: var(--p-border);
+    --pf-v5-global--disabled-color--300: var(--p-quiet);
+
+    --pf-v5-global--icon--Color--light: var(--p-text-3);
+    --pf-v5-global--icon--Color--dark: var(--p-text);
+    --pf-v5-global--icon--Color--light--light: var(--p-border);
+    --pf-v5-global--icon--Color--dark--light: var(--p-ink);
+    --pf-v5-global--icon--Color--light--dark: var(--p-text-3);
+    --pf-v5-global--icon--Color--dark--dark: var(--p-text);
+
+    --pf-v5-global--FontFamily--text: var(--p-font-ui);
+    --pf-v5-global--FontFamily--text--vf: var(--p-font-ui);
+    --pf-v5-global--FontFamily--heading: var(--p-font-head);
+    --pf-v5-global--FontFamily--heading--vf: var(--p-font-head);
+    --pf-v5-global--FontFamily--monospace: var(--p-font-mono);
+    --pf-v5-global--FontFamily--monospace--vf: var(--p-font-mono);
+
+    /* Shadows tinted from the palette's ink instead of PatternFly's #030303.
+       The admin console uses every step: sm (cards), md (menus), lg (modals,
+       the drawer edge), xl (wizards), the directional ones on sticky table
+       edges and drawers, and inset (the code editor). */
+    --pf-v5-global--BoxShadow--sm: 0 1px 2px color-mix(in srgb, var(--p-text) 12%, transparent), 0 0 2px color-mix(in srgb, var(--p-text) 6%, transparent);
+    --pf-v5-global--BoxShadow--md: 0 4px 12px color-mix(in srgb, var(--p-text) 14%, transparent), 0 0 4px color-mix(in srgb, var(--p-text) 6%, transparent);
+    --pf-v5-global--BoxShadow--lg: 0 8px 24px color-mix(in srgb, var(--p-text) 18%, transparent), 0 0 6px color-mix(in srgb, var(--p-text) 8%, transparent);
+    --pf-v5-global--BoxShadow--xl: 0 16px 40px color-mix(in srgb, var(--p-text) 20%, transparent), 0 0 8px color-mix(in srgb, var(--p-text) 10%, transparent);
+    --pf-v5-global--BoxShadow--sm-top: 0 -2px 4px -2px color-mix(in srgb, var(--p-text) 12%, transparent);
+    --pf-v5-global--BoxShadow--sm-right: 2px 0 4px -2px color-mix(in srgb, var(--p-text) 12%, transparent);
+    --pf-v5-global--BoxShadow--sm-bottom: 0 2px 4px -2px color-mix(in srgb, var(--p-text) 12%, transparent);
+    --pf-v5-global--BoxShadow--sm-left: -2px 0 4px -2px color-mix(in srgb, var(--p-text) 12%, transparent);
+    --pf-v5-global--BoxShadow--md-top: 0 -8px 8px -6px color-mix(in srgb, var(--p-text) 14%, transparent);
+    --pf-v5-global--BoxShadow--md-right: 8px 0 8px -6px color-mix(in srgb, var(--p-text) 14%, transparent);
+    --pf-v5-global--BoxShadow--md-bottom: 0 8px 8px -6px color-mix(in srgb, var(--p-text) 14%, transparent);
+    --pf-v5-global--BoxShadow--md-left: -8px 0 8px -6px color-mix(in srgb, var(--p-text) 14%, transparent);
+    --pf-v5-global--BoxShadow--lg-top: 0 -12px 12px -8px color-mix(in srgb, var(--p-text) 18%, transparent);
+    --pf-v5-global--BoxShadow--lg-right: 12px 0 12px -8px color-mix(in srgb, var(--p-text) 18%, transparent);
+    --pf-v5-global--BoxShadow--lg-bottom: 0 12px 12px -8px color-mix(in srgb, var(--p-text) 18%, transparent);
+    --pf-v5-global--BoxShadow--lg-left: -12px 0 12px -8px color-mix(in srgb, var(--p-text) 18%, transparent);
+    --pf-v5-global--BoxShadow--xl-top: 0 -16px 16px -8px color-mix(in srgb, var(--p-text) 20%, transparent);
+    --pf-v5-global--BoxShadow--xl-right: 16px 0 16px -8px color-mix(in srgb, var(--p-text) 20%, transparent);
+    --pf-v5-global--BoxShadow--xl-bottom: 0 16px 16px -8px color-mix(in srgb, var(--p-text) 20%, transparent);
+    --pf-v5-global--BoxShadow--xl-left: -16px 0 16px -8px color-mix(in srgb, var(--p-text) 20%, transparent);
+    --pf-v5-global--BoxShadow--inset: inset 0 0 10px color-mix(in srgb, var(--p-text) 18%, transparent);
+
+    --pf-v5-global--BorderRadius--sm: var(--p-radius-sm);
+    --pf-v5-global--BorderRadius--lg: var(--p-radius-lg);
+
+    color-scheme: light;
+}
+
+/* ── The loading splash ─────────────────────────────────────────────────────
+   index.ftl's inline <style> paints it #fff, with a prefers-color-scheme DARK
+   variant (#1b1d21). That media query is NOT gated by darkMode, so without
+   these the console flashes near-black on every load for a dark-OS visitor. */
+.keycloak__loading-container {
+    background-color: var(--p-surface) !important;
+    color: var(--p-text) !important;
+}
+#loading-text {
+    font-family: var(--p-font-head);
+    color: var(--p-text-2);
+}
+
+html,
+body {
+    background: var(--p-surface);
+    color: var(--p-text);
+    font-family: var(--p-font-ui);
+}
+
+/* ── Masthead ────────────────────────────────────────────────────────────────
+   PatternFly's masthead is a DARK component: its ground is
+   BackgroundColor--dark-100 and its toolbar paints
+   `--pf-v5-c-masthead--c-toolbar--BackgroundColor`, which defaults to the RAW
+   palette black (#000, not a global token, so the mapping never reaches it).
+   Both are set here; the masthead's descendants are re-scoped to the bar's ink
+   so a LIGHT --p-masthead also works. */
+.pf-v5-c-masthead {
+    --pf-v5-c-masthead--BackgroundColor: var(--p-masthead);
+    --pf-v5-c-masthead--c-toolbar--BackgroundColor: transparent;
+    --pf-v5-c-masthead--c-toolbar__content--BackgroundColor: transparent;
+    background-color: var(--p-masthead);
+    color: var(--p-masthead-ink);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--p-text) 12%, transparent);
+}
+.pf-v5-c-masthead .pf-v5-c-toolbar,
+.pf-v5-c-masthead .pf-v5-c-toolbar__content,
+.pf-v5-c-masthead .pf-v5-c-toolbar__content-section {
+    background-color: transparent;
+}
+/* The hamburger and the help (?) button are plain buttons whose icon colour
+   comes from the dark-masthead scope. */
+.pf-v5-c-masthead .pf-v5-c-button.pf-m-plain,
+.pf-v5-c-masthead__toggle .pf-v5-c-button {
+    color: var(--p-masthead-ink);
+}
+.pf-v5-c-masthead .pf-v5-c-button.pf-m-plain:hover {
+    background-color: color-mix(in srgb, var(--p-masthead-ink) 15%, transparent);
+    border-radius: var(--p-radius);
+}
+/* The user menu toggle ("admin ▾"): no box on the bar, same treatment as
+   account.css. */
+.pf-v5-c-masthead .pf-v5-c-menu-toggle {
+    background-color: transparent;
+    border: none;
+    border-radius: var(--p-radius);
+    color: var(--p-masthead-ink);
+}
+.pf-v5-c-masthead .pf-v5-c-menu-toggle:hover,
+.pf-v5-c-masthead .pf-v5-c-menu-toggle.pf-m-expanded {
+    background-color: color-mix(in srgb, var(--p-masthead-ink) 15%, transparent);
+    color: var(--p-masthead-ink);
+    box-shadow: none;
+}
+.pf-v5-c-masthead .pf-v5-c-menu-toggle__toggle-icon,
+.pf-v5-c-masthead .pf-v5-c-menu-toggle__text { color: inherit; }
+/* ⚠️ A dropdown opened from the masthead renders INSIDE it (PatternFly
+   appends poppers inline), so it inherits the bar's ink. Reset to the page's. */
+.pf-v5-c-masthead .pf-v5-c-menu {
+    color: var(--p-text);
+}
+
+/* The brand. `<img class="keycloak__pageheader_brand">` (stock: height 35px)
+   inside `<a class="pf-v5-c-masthead__brand">`, which links to the current
+   realm's dashboard. Selected structurally, as in account.css. */
+.pf-v5-c-masthead__brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+.pf-v5-c-masthead__brand > img {
+    height: 38px;
+    width: auto;
+    max-height: none;
+    display: block;
+}
+/* Optional typed wordmark — enable ONLY when img/logo.svg has no lettering.
+.pf-v5-c-masthead__brand::after {
+    content: "__BRAND__";
+    margin-inline-start: 10px;
+    font: 700 18px/1 var(--p-font-head);
+    color: var(--p-masthead-ink);
+    white-space: nowrap;
+}
+*/
+.pf-v5-c-masthead__brand:focus-visible {
+    outline: 2px solid var(--p-masthead-ink);
+    outline-offset: 3px;
+    border-radius: var(--p-radius-sm);
+}
+/* The masthead avatar is a bare <svg> beside the user menu, not a control. */
+.pf-v5-c-masthead .pf-v5-c-avatar { display: none; }
+
+/* The "temporary admin user" banner above the masthead. pf-m-gold takes its
+   ground from warning-color--100 (→ --p-warn); its text is pinned to the dark
+   ink so it holds on any warn tone. */
+.pf-v5-c-banner {
+    font-family: var(--p-font-ui);
+}
+.pf-v5-c-banner.pf-m-gold {
+    --pf-v5-c-banner--Color: var(--p-text);
+    color: var(--p-text);
+}
+
+/* ── Sidebar and navigation ──────────────────────────────────────────────────
+   ⚠️ DARK BY DEFAULT. `.pf-v5-c-page__sidebar` takes BackgroundColor--dark-300
+   and `.pf-v5-c-nav` paints links in Color--light-100 with dark-400 / dark-200
+   current and hover fills. The console renders the plain (dark) variants, so
+   the light family mapping alone yields a near-black sidebar — or, once
+   dark-* is mapped to the palette's ink, a slate rail with white links that
+   matches nothing. Re-pointing the component variables (scoped to the page
+   sidebar, so horizontal and tertiary navs keep their own) makes the sidebar
+   whatever --p-sidebar says. */
+.pf-v5-c-page__sidebar {
+    --pf-v5-c-page__sidebar--BackgroundColor: var(--p-sidebar);
+    background-color: var(--p-sidebar);
+    color: var(--p-sidebar-ink);
+    border-inline-end: 1px solid var(--p-border);
+}
+.pf-v5-c-page__sidebar .pf-v5-c-nav {
+    --pf-v5-c-nav__link--Color: var(--p-sidebar-ink);
+    --pf-v5-c-nav__link--hover--Color: var(--p-sidebar-ink);
+    --pf-v5-c-nav__link--focus--Color: var(--p-sidebar-ink);
+    --pf-v5-c-nav__link--active--Color: var(--p-sidebar-ink);
+    --pf-v5-c-nav__link--m-current--Color: var(--p-sidebar-ink);
+    --pf-v5-c-nav__link--hover--BackgroundColor: color-mix(in srgb, var(--p-sidebar-ink) 7%, var(--p-sidebar));
+    --pf-v5-c-nav__link--focus--BackgroundColor: color-mix(in srgb, var(--p-sidebar-ink) 7%, var(--p-sidebar));
+    --pf-v5-c-nav__link--active--BackgroundColor: color-mix(in srgb, var(--p-sidebar-ink) 7%, var(--p-sidebar));
+    --pf-v5-c-nav__link--m-current--BackgroundColor: color-mix(in srgb, var(--p-sidebar-accent) 12%, var(--p-sidebar));
+    --pf-v5-c-nav__item--m-current--not--m-expanded__link--BackgroundColor: color-mix(in srgb, var(--p-sidebar-accent) 12%, var(--p-sidebar));
+    --pf-v5-c-nav__link--before--BorderColor: transparent;
+    --pf-v5-c-nav__link--after--BorderColor: var(--p-sidebar-accent);
+    --pf-v5-c-nav__link--m-current--after--BorderColor: var(--p-sidebar-accent);
+    --pf-v5-c-nav__item--before--BorderColor: color-mix(in srgb, var(--p-sidebar-ink) 14%, var(--p-sidebar));
+    --pf-v5-c-nav__section-title--Color: var(--p-sidebar-ink-2);
+    --pf-v5-c-nav__section-title--BorderBottomColor: color-mix(in srgb, var(--p-sidebar-ink) 14%, var(--p-sidebar));
+    background-color: transparent;
+}
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link {
+    font: 500 14px/1.4 var(--p-font-ui);
+    border-radius: 0 var(--p-radius) var(--p-radius) 0;
+    margin-inline-end: 8px;
+}
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link.pf-m-current {
+    font-weight: 600;
+}
+/* ⚠️ The current-item rule is the link's ::after (a 4px inline-start
+   border), and its colour variable is declared on the LINK, so setting it on
+   the nav (above) does not reach it: it resolves to active-color--200, which
+   stock is a pale blue meant for the dark nav (→ --p-accent-soft here) and
+   vanishes on a light sidebar. Painted directly. */
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link.pf-m-current::after,
+.pf-v5-c-page__sidebar .pf-v5-c-nav__link[aria-current="page"]::after {
+    border-inline-start-color: var(--p-sidebar-accent);
+}
+/* Section titles ("Manage", "Configure"). The first one is the current-realm
+   header: "<realm display name> [Current realm]". */
+.pf-v5-c-page__sidebar .pf-v5-c-nav__section-title {
+    font: 600 11px/1.2 var(--p-font-head);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.pf-v5-c-page__sidebar .pf-v5-c-nav > .pf-v5-c-nav__section-title:first-child {
+    font: 700 15px/1.3 var(--p-font-head);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-sidebar-ink);
+}
+
+/* ── Page, sections, headings ────────────────────────────────────────────────
+   PatternFly's own section variants are left alone: the page ground is
+   light-300 (→ --p-surface) and `pf-m-light` sections (every view header and
+   most content) are light-100 (→ --p-canvas). That is already the account
+   console's "cards on a darker ground". */
+.pf-v5-c-page {
+    --pf-v5-c-page--BackgroundColor: var(--p-surface);
+}
+.pf-v5-c-title,
+h1, h2, h3, h4 {
+    font-family: var(--p-font-head);
+    letter-spacing: normal;
+}
+.pf-v5-c-breadcrumb {
+    font-family: var(--p-font-ui);
+}
+code, kbd, samp,
+.pf-v5-c-clipboard-copy__text,
+.pf-v5-c-code-block {
+    font-family: var(--p-font-mono);
+}
+
+.pf-v5-c-card {
+    --pf-v5-c-card--BackgroundColor: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius-xl);
+    box-shadow: var(--pf-v5-global--BoxShadow--sm);
+}
+/* Cards used as layout (plain / flat / selectable tiles keep their shape but
+   take the palette's corner). */
+.pf-v5-c-card.pf-m-plain { border: none; box-shadow: none; }
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.pf-v5-c-tabs {
+    --pf-v5-c-tabs__link--Color: var(--p-text-2);
+    --pf-v5-c-tabs__item--m-current__link--Color: var(--p-text);
+    font-family: var(--p-font-ui);
+}
+.pf-v5-c-tabs__link {
+    font-family: var(--p-font-head);
+    font-weight: 600;
+}
+/* Box tabs ("User list", the user / client / realm-settings tab rows): the
+   current tab is the card, the others a quiet fill. Rounded on top only — they
+   sit on the content's top edge. */
+.pf-v5-c-tabs.pf-m-box {
+    --pf-v5-c-tabs--m-box__link--BackgroundColor: var(--p-quiet);
+    --pf-v5-c-tabs--m-box__item--m-current__link--BackgroundColor: var(--p-canvas);
+}
+.pf-v5-c-tabs.pf-m-box .pf-v5-c-tabs__link,
+.pf-v5-c-tabs.pf-m-box .pf-v5-c-tabs__link::before,
+.pf-v5-c-tabs.pf-m-box .pf-v5-c-tabs__link::after {
+    border-start-start-radius: var(--p-radius);
+    border-start-end-radius: var(--p-radius);
+}
+.pf-v5-c-tabs.pf-m-box .pf-v5-c-tabs__item.pf-m-current .pf-v5-c-tabs__link {
+    background-color: var(--p-canvas);
+}
+
+/* ── Toolbars, tables, pagination ────────────────────────────────────────── */
+.pf-v5-c-toolbar {
+    --pf-v5-c-toolbar--BackgroundColor: var(--p-canvas);
+    font-family: var(--p-font-ui);
+}
+.pf-v5-c-table {
+    --pf-v5-c-table--BackgroundColor: var(--p-canvas);
+    --pf-v5-c-table--BorderColor: var(--p-line);
+    --pf-v5-c-table--cell--Color: var(--p-text-2);
+    color: var(--p-text-2);
+}
+.pf-v5-c-table thead th,
+.pf-v5-c-table__thead .pf-v5-c-table__th {
+    font: 600 11px/1.2 var(--p-font-head);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+.pf-v5-c-table tbody tr:hover > td,
+.pf-v5-c-table tbody tr:hover > th {
+    background-color: color-mix(in srgb, var(--p-accent-soft) 45%, var(--p-canvas));
+}
+.pf-v5-c-table__sort-indicator,
+.pf-v5-c-table .pf-v5-c-table__sort.pf-m-selected .pf-v5-c-table__button {
+    color: var(--p-accent-text);
+}
+.pf-v5-c-data-list {
+    --pf-v5-c-data-list--BackgroundColor: var(--p-canvas);
+    --pf-v5-c-data-list__item--BorderBottomColor: var(--p-line);
+}
+.pf-v5-c-pagination {
+    font-family: var(--p-font-ui);
+}
+
+/* ── Form controls ───────────────────────────────────────────────────────────
+   Everything below carries over from account.css, where each was a measured
+   defect, and extends it to the admin console's extra control shapes.
+
+   ⚠️ The border is not on the control. PatternFly draws it on two
+   absolutely-positioned SQUARE pseudo-elements (`::before` 1px three sides,
+   `::after` the focus underline). On a rounded control their corners poke out
+   — a doubled edge and a corner tick. The admin console has FOUR such shapes:
+   .pf-v5-c-form-control, .pf-v5-c-menu-toggle, .pf-v5-c-text-input-group__text
+   (search boxes, typeaheads) and .pf-v5-c-button.pf-m-control (the joined
+   "→" search button). All lose both pseudo-elements; the element's own border
+   is the only one. */
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after,
+.pf-v5-c-menu-toggle::before,
+.pf-v5-c-menu-toggle::after,
+.pf-v5-c-text-input-group__text::before,
+.pf-v5-c-text-input-group__text::after,
+.pf-v5-c-button.pf-m-control::before,
+.pf-v5-c-button.pf-m-control::after {
+    display: none;
+}
+
+/* ⚠️ The WRAPPER owns the ground; the inner control is transparent and
+   inherits the radius (an opaque square <input> paints over the curve). */
+.pf-v5-c-form-control,
+.pf-v5-c-text-input-group,
+.pf-v5-c-menu-toggle,
+.pf-v5-c-button.pf-m-control {
+    background-color: var(--p-raised);
+    color: var(--p-text);
+    font-family: var(--p-font-ui);
+    border: 1px solid var(--p-border-mid);
+    border-radius: var(--p-radius);
+}
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select,
+.pf-v5-c-form-control > textarea,
+.pf-v5-c-text-input-group__text,
+.pf-v5-c-text-input-group__text-input {
+    background-color: transparent;
+    border-radius: inherit;
+    color: inherit;
+    font-family: var(--p-font-ui);
+}
+/* A text-input-group INSIDE a typeahead menu toggle is part of that toggle:
+   one border, not two. */
+.pf-v5-c-menu-toggle .pf-v5-c-text-input-group {
+    border: none;
+    background-color: transparent;
+}
+/* Icon-only toggles (table kebabs, pagination) and plain buttons carry no box. */
+.pf-v5-c-menu-toggle.pf-m-plain {
+    border: none;
+    background-color: transparent;
+}
+.pf-v5-c-menu-toggle.pf-m-primary {
+    background-color: var(--p-accent-text);
+    border-color: var(--p-accent-text);
+    color: var(--p-ink);
+}
+
+/* ⚠️ JOINED controls. The admin toolbars are input groups: "Default search ▾"
+   + search box + "→", or a select + text field. Rounding each piece makes a
+   row of pills pressed together, with the doubled border between them. Only
+   the OUTER ends are round, and each later piece overlaps the previous
+   border by 1px. ⚠️ Two containers do this: .pf-v5-c-input-group (toolbars)
+   and .pf-v5-c-clipboard-copy__group (realm name, client id, user ID) — the
+   second has no __item wrappers, so it needs its own selectors; missing it
+   left the realm name and its copy button as two separate pills. */
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:not(:first-child) > *,
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:not(:first-child) > * > .pf-v5-c-menu-toggle,
+.pf-v5-c-clipboard-copy__group > :not(:first-child),
+.pf-v5-c-clipboard-copy__group > :not(:first-child) > .pf-v5-c-button {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:not(:last-child) > *,
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:not(:last-child) > * > .pf-v5-c-menu-toggle,
+.pf-v5-c-clipboard-copy__group > :not(:last-child),
+.pf-v5-c-clipboard-copy__group > :not(:last-child) > .pf-v5-c-button {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+.pf-v5-c-input-group > .pf-v5-c-input-group__item + .pf-v5-c-input-group__item,
+.pf-v5-c-clipboard-copy__group > * + * {
+    margin-inline-start: -1px;
+}
+/* A joined plain/control button still needs a visible edge to belong. */
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+    color: var(--p-text-2);
+}
+
+/* Focus: the project's ring, on the element, so it follows the corners. */
+.pf-v5-c-form-control:focus-within,
+.pf-v5-c-text-input-group:focus-within,
+.pf-v5-c-menu-toggle:focus-visible,
+.pf-v5-c-menu-toggle.pf-m-expanded:not(.pf-m-plain),
+.pf-v5-c-button.pf-m-control:focus-visible {
+    border-color: var(--p-focus);
+    box-shadow: var(--p-focus-ring);
+    outline: none;
+    position: relative;
+    z-index: 1;
+}
+.pf-v5-c-form-control > input:focus,
+.pf-v5-c-form-control > textarea:focus,
+.pf-v5-c-form-control > select:focus,
+.pf-v5-c-text-input-group__text-input:focus { outline: none; }
+
+/* ⚠️ Validation states lived on the removed ::after; re-declared on the
+   element. (A required-but-empty field is pf-m-warning.) */
+.pf-v5-c-form-control.pf-m-warning { border-color: var(--p-warn); }
+.pf-v5-c-form-control.pf-m-success { border-color: var(--p-online); }
+.pf-v5-c-form-control.pf-m-error   { border-color: var(--p-alert); }
+.pf-v5-c-form-control.pf-m-warning:focus-within,
+.pf-v5-c-form-control.pf-m-success:focus-within,
+.pf-v5-c-form-control.pf-m-error:focus-within { border-color: var(--p-focus); }
+
+/* Read-only / disabled: --p-quiet, never the card tone (it would look
+   writable). ⚠️ The admin console marks many read-only inputs with the bare
+   `readonly` attribute and NO pf-m-readonly on the wrapper (user ID, Created
+   at): without :has() they render as editable white fields. */
+.pf-v5-c-form-control.pf-m-disabled,
+.pf-v5-c-form-control.pf-m-readonly,
+.pf-v5-c-form-control:has(> input[readonly]),
+.pf-v5-c-text-input-group.pf-m-disabled,
+.pf-v5-c-menu-toggle:not(.pf-m-plain):disabled,
+.pf-v5-c-menu-toggle.pf-m-disabled:not(.pf-m-plain) {
+    background-color: var(--p-quiet);
+    border-color: var(--p-border);
+    color: var(--p-text-3);
+}
+.pf-v5-c-form-control.pf-m-disabled > input,
+.pf-v5-c-form-control.pf-m-readonly > input {
+    background-color: transparent;
+    color: inherit;
+}
+
+/* Labels: sentence case. Unlike the account console's few short labels, the
+   admin's forms are long horizontal grids with long labels ("Front channel
+   logout session required"); spaced capitals at 10px become unreadable. */
+.pf-v5-c-form__label-text {
+    font-family: var(--p-font-head);
+    font-weight: 600;
+    color: var(--p-text);
+}
+.pf-v5-c-form__helper-text,
+.pf-v5-c-helper-text__item {
+    font-family: var(--p-font-ui);
+}
+
+/* Switches ("On / Off" everywhere in the admin). Checked = accent; the
+   unchecked track is a mid tone that still clears 3:1 (non-text). */
+.pf-v5-c-switch {
+    --pf-v5-c-switch__input--checked__toggle--BackgroundColor: var(--p-accent);
+    --pf-v5-c-switch__toggle--BackgroundColor: var(--p-border-mid);
+    --pf-v5-c-switch__input--focus__toggle--OutlineColor: var(--p-focus);
+    --pf-v5-c-switch__label--Color: var(--p-text-2);
+    font-family: var(--p-font-ui);
+}
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--p-accent);
+}
+
+/* Number inputs (token lifespans, OTP digits): the +/- buttons are control
+   buttons joined to the field — the input-group rules above shape them. */
+.pf-v5-c-number-input .pf-v5-c-form-control { border-radius: 0; }
+.pf-v5-c-number-input .pf-v5-c-input-group > :first-child .pf-v5-c-button {
+    border-start-start-radius: var(--p-radius);
+    border-end-start-radius: var(--p-radius);
+}
+.pf-v5-c-number-input .pf-v5-c-input-group > :last-child .pf-v5-c-button {
+    border-start-end-radius: var(--p-radius);
+    border-end-end-radius: var(--p-radius);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.pf-v5-c-button {
+    border-radius: var(--p-radius);
+    font-family: var(--p-font-head);
+    font-weight: 600;
+}
+.pf-v5-c-button::after { border-radius: inherit; }
+.pf-v5-c-button.pf-m-primary {
+    background-color: var(--p-accent-text);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus-visible {
+    background-color: var(--p-accent-hi);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-secondary {
+    background-color: transparent;
+    color: var(--p-accent-text);
+    --pf-v5-c-button--after--BorderColor: var(--p-accent-text);
+}
+.pf-v5-c-button.pf-m-secondary:hover {
+    background-color: var(--p-accent-soft);
+    color: var(--p-accent-hi);
+}
+.pf-v5-c-button.pf-m-danger {
+    /* ⚠️ --p-alert-TEXT: a bright red under white text fails AA. */
+    background-color: var(--p-alert-text);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-danger:hover {
+    background-color: var(--p-alert-hi);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-link,
+.pf-v5-c-button.pf-m-link.pf-m-inline {
+    color: var(--p-accent-text);
+}
+.pf-v5-c-button.pf-m-link:hover { color: var(--p-accent-hi); }
+.pf-v5-c-button.pf-m-link.pf-m-danger {
+    background-color: transparent;
+    color: var(--p-alert-text);
+}
+/* ⚠️ Without this, a dialog's autofocused close (×) wears the browser's own
+   black `auto` ring — a heavy black box in the corner of every modal. */
+.pf-v5-c-button:focus-visible {
+    outline: 2px solid var(--p-focus);
+    outline-offset: 2px;
+}
+.pf-v5-c-button:disabled,
+.pf-v5-c-button.pf-m-disabled,
+.pf-v5-c-button.pf-m-aria-disabled {
+    background-color: var(--p-quiet);
+    color: var(--p-text-3);
+}
+.pf-v5-c-button.pf-m-plain:disabled,
+.pf-v5-c-button.pf-m-link:disabled,
+.pf-v5-c-button.pf-m-link.pf-m-aria-disabled,
+.pf-v5-c-button.pf-m-plain.pf-m-aria-disabled {
+    background-color: transparent;
+}
+
+/* ── Menus, dropdowns, selects ───────────────────────────────────────────── */
+.pf-v5-c-menu {
+    --pf-v5-c-menu--BackgroundColor: var(--p-canvas);
+    --pf-v5-c-menu__item--hover--BackgroundColor: var(--p-sunken);
+    --pf-v5-c-menu__list-item--hover--BackgroundColor: var(--p-sunken);
+    --pf-v5-c-menu__item--m-selected__select-icon--Color: var(--p-accent-text);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius-lg);
+    box-shadow: var(--pf-v5-global--BoxShadow--md);
+    font-family: var(--p-font-ui);
+    overflow: hidden;
+}
+.pf-v5-c-menu .pf-v5-c-menu__list-item:hover,
+.pf-v5-c-menu .pf-v5-c-menu__item:hover {
+    background-color: var(--p-sunken);
+}
+
+/* ── Labels and chips ────────────────────────────────────────────────────────
+   ⚠️ PatternFly's coloured labels take their FILL from the raw palette
+   (`--pf-v5-c-label--m-blue--BackgroundColor: palette--blue-50`), which the
+   global mapping never touches: the sidebar's "Current realm" pill and the
+   tables' "Default" / "Enabled" labels stay PatternFly-blue on an indigo
+   theme. Re-pointed per colour to the palette's roles. */
+.pf-v5-c-label {
+    border-radius: var(--p-radius-sm);
+    font-family: var(--p-font-ui);
+    --pf-v5-c-label--BackgroundColor: var(--p-quiet);
+    --pf-v5-c-label__content--Color: var(--p-text-2);
+    --pf-v5-c-label__content--before--BorderColor: var(--p-border);
+}
+.pf-v5-c-label__content { border-radius: inherit; }
+.pf-v5-c-label__content::before { border-radius: inherit; }
+.pf-v5-c-label.pf-m-blue,
+.pf-v5-c-label.pf-m-cyan,
+.pf-v5-c-label.pf-m-purple {
+    --pf-v5-c-label--BackgroundColor: var(--p-accent-soft);
+    --pf-v5-c-label__content--Color: var(--p-accent-hi);
+    --pf-v5-c-label__content--before--BorderColor: color-mix(in srgb, var(--p-accent) 35%, var(--p-accent-soft));
+    --pf-v5-c-label__icon--Color: var(--p-accent-text);
+    --pf-v5-c-label--m-blue--BackgroundColor: var(--p-accent-soft);
+    --pf-v5-c-label--m-blue__content--Color: var(--p-accent-hi);
+    --pf-v5-c-label--m-blue__content--before--BorderColor: color-mix(in srgb, var(--p-accent) 35%, var(--p-accent-soft));
+    --pf-v5-c-label--m-blue__icon--Color: var(--p-accent-text);
+}
+.pf-v5-c-label.pf-m-green {
+    --pf-v5-c-label--BackgroundColor: color-mix(in srgb, var(--p-online) 12%, var(--p-canvas));
+    --pf-v5-c-label__content--Color: var(--p-online-text);
+    --pf-v5-c-label__content--before--BorderColor: color-mix(in srgb, var(--p-online) 40%, var(--p-canvas));
+    --pf-v5-c-label--m-green--BackgroundColor: color-mix(in srgb, var(--p-online) 12%, var(--p-canvas));
+    --pf-v5-c-label--m-green__content--Color: var(--p-online-text);
+}
+.pf-v5-c-label.pf-m-gold,
+.pf-v5-c-label.pf-m-orange {
+    --pf-v5-c-label--BackgroundColor: color-mix(in srgb, var(--p-warn) 14%, var(--p-canvas));
+    --pf-v5-c-label__content--Color: var(--p-warn-text);
+    --pf-v5-c-label__content--before--BorderColor: color-mix(in srgb, var(--p-warn) 45%, var(--p-canvas));
+    --pf-v5-c-label--m-gold--BackgroundColor: color-mix(in srgb, var(--p-warn) 14%, var(--p-canvas));
+    --pf-v5-c-label--m-gold__content--Color: var(--p-warn-text);
+    --pf-v5-c-label--m-orange--BackgroundColor: color-mix(in srgb, var(--p-warn) 14%, var(--p-canvas));
+    --pf-v5-c-label--m-orange__content--Color: var(--p-warn-text);
+}
+.pf-v5-c-label.pf-m-red {
+    --pf-v5-c-label--BackgroundColor: color-mix(in srgb, var(--p-alert) 10%, var(--p-canvas));
+    --pf-v5-c-label__content--Color: var(--p-alert-text);
+    --pf-v5-c-label__content--before--BorderColor: color-mix(in srgb, var(--p-alert) 40%, var(--p-canvas));
+    --pf-v5-c-label--m-red--BackgroundColor: color-mix(in srgb, var(--p-alert) 10%, var(--p-canvas));
+    --pf-v5-c-label--m-red__content--Color: var(--p-alert-text);
+}
+/* Chips (typeahead selections, the role-mapping filters) are coloured by the
+   light-* / dark-* mapping. If one renders as a solid pill, fix the family
+   mapping, not the chip. */
+.pf-v5-c-chip {
+    border-radius: var(--p-radius-sm);
+    font-family: var(--p-font-ui);
+}
+.pf-v5-c-chip::before { border-radius: inherit; }
+
+/* ── Modals, wizards, drawers, popovers ──────────────────────────────────── */
+.pf-v5-c-modal-box {
+    --pf-v5-c-modal-box--BackgroundColor: var(--p-canvas);
+    border-radius: var(--p-radius-xl);
+    box-shadow: var(--pf-v5-global--BoxShadow--xl);
+}
+.pf-v5-c-modal-box__title,
+.pf-v5-c-wizard__title-text {
+    font-family: var(--p-font-head);
+}
+.pf-v5-c-backdrop {
+    --pf-v5-c-backdrop--BackgroundColor: color-mix(in srgb, var(--p-text) 55%, transparent);
+}
+.pf-v5-c-wizard {
+    --pf-v5-c-wizard__nav--BackgroundColor: var(--p-canvas);
+    --pf-v5-c-wizard__nav-link--m-current--Color: var(--p-accent-text);
+    --pf-v5-c-wizard__nav-link--m-current--before--BackgroundColor: var(--p-accent-text);
+    --pf-v5-c-wizard__nav-link--m-current--before--Color: var(--p-ink);
+}
+.pf-v5-c-drawer {
+    --pf-v5-c-drawer__panel--BackgroundColor: var(--p-canvas);
+}
+.pf-v5-c-popover__content {
+    border-radius: var(--p-radius-lg);
+}
+.pf-v5-c-tooltip__content {
+    border-radius: var(--p-radius-sm);
+    font-family: var(--p-font-ui);
+}
+
+/* ── Alerts and toasts ───────────────────────────────────────────────────── */
+.pf-v5-c-alert {
+    --pf-v5-c-alert--BackgroundColor: var(--p-canvas);
+    border-radius: var(--p-radius-lg);
+    font-family: var(--p-font-ui);
+}
+.pf-v5-c-alert.pf-m-inline {
+    border: 1px solid var(--p-border);
+}
+.pf-v5-c-alert.pf-m-inline.pf-m-success { border-inline-start: 3px solid var(--p-online); }
+.pf-v5-c-alert.pf-m-inline.pf-m-warning { border-inline-start: 3px solid var(--p-warn); }
+.pf-v5-c-alert.pf-m-inline.pf-m-danger  { border-inline-start: 3px solid var(--p-alert); }
+.pf-v5-c-alert.pf-m-inline.pf-m-info    { border-inline-start: 3px solid var(--p-accent); }
+.pf-v5-c-alert__title {
+    font-family: var(--p-font-head);
+}
+/* Toasts float over content: the deeper shadow, the top-edge status rule. */
+.pf-v5-c-alert-group.pf-m-toast .pf-v5-c-alert {
+    box-shadow: var(--pf-v5-global--BoxShadow--lg);
+}
+
+/* ── Empty states, expandables, description lists ───────────────────────── */
+.pf-v5-c-empty-state__title-text,
+.pf-v5-c-empty-state .pf-v5-c-title {
+    font-family: var(--p-font-head);
+}
+.pf-v5-c-empty-state__icon {
+    color: var(--p-text-faint);
+}
+.pf-v5-c-expandable-section__toggle {
+    color: var(--p-accent-text);
+}
+.pf-v5-c-description-list__term {
+    font-family: var(--p-font-head);
+    font-weight: 600;
+    color: var(--p-text-2);
+}
+
+/* ── Code editor ─────────────────────────────────────────────────────────────
+   Monaco paints its own canvas and theme (its colours are not CSS variables
+   and are re-applied by the editor), so only the FRAME is themed: border,
+   corners, header. The editing surface stays Monaco's light theme. */
+.pf-v5-c-code-editor {
+    border-radius: var(--p-radius);
+    overflow: hidden;
+}
+.pf-v5-c-code-editor__header,
+.pf-v5-c-code-editor__main {
+    border-color: var(--p-border);
+}
+
+/* ── Spinner, progress ───────────────────────────────────────────────────── */
+.pf-v5-c-spinner {
+    --pf-v5-c-spinner--Color: var(--p-accent);
+}
+
+/* ── Keyboard focus everywhere PatternFly does not draw one ─────────────── */
+a:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--p-focus);
+    outline-offset: 2px;
+}

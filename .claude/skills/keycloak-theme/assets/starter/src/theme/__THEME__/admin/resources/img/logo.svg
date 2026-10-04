@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="__BRAND__">
+  <!-- __PLACEHOLDER_LOGO__ replace with the project's real mark -->
+  <!-- keycloak-theme skill STARTER (admin). This one file is shown twice: on the
+       console MASTHEAD (--p-masthead in css/admin.css) and on the realm
+       DASHBOARD's light card. Pick a cut that reads on both, usually the
+       account theme's masthead cut. See references/admin.md. -->
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#FFFFFF"/>
+  <circle cx="32" cy="32" r="13" fill="#4338CA"/>
+</svg>

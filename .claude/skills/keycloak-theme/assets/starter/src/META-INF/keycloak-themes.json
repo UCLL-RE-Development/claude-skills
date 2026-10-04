@@ -1,0 +1,13 @@
+{
+  "themes": [
+    {
+      "name": "__THEME__",
+      "types": [
+        "login",
+        "account",
+        "email",
+        "admin"
+      ]
+    }
+  ]
+}

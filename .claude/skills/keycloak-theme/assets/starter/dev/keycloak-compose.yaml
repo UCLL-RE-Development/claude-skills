@@ -1,0 +1,71 @@
+# Local Keycloak for developing the __THEME__ theme (src/theme/__THEME__).
+#
+#   docker compose -f dev/keycloak-compose.yaml up        (from the theme root)
+#
+#   Keycloak  http://localhost:8087   admin / admin   (dev only)
+#   MailHog   http://localhost:8025   every mail Keycloak sends lands here
+#   Ports: KC_PORT / MAIL_PORT override 8087 / 8025. SMTP stays on the
+#   compose network (keycloak → mailhog:1025) and is not published.
+#
+# Paths below are relative to THIS file's directory (dev/), which is how
+# Compose resolves them whatever directory you run it from.
+#
+# ⚠️ PINNED TO THE VERSION PRODUCTION RUNS. `parent=base` means most of the
+# login sequence renders from the SERVER's templates, so the theme is only as
+# verified as the Keycloak it was checked against — a dev container on an older
+# release silently tests different markup. Check this tag against the production
+# server before trusting a pass, and bump it whenever production is upgraded.
+
+# ⚠️ An explicit project name. Without it Compose names the project after this
+# folder — "dev" — which collides with every other stack kept in a dev/ folder:
+# it then calls their containers "orphans", and a `down --remove-orphans` here
+# would remove them.
+name: __CONTAINER__
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:__KC_VERSION__
+    container_name: __CONTAINER__
+    command:
+      - start-dev
+      # ── Organizations: enable it if the TARGET realm has Organizations ──
+      # The account console's Organizations tab and the login sequence's
+      # "sign in to a different organization" control do not exist without the
+      # feature, and a theme that was never rendered with them on has not been
+      # tested. Mirror production: uncomment when the production realm uses
+      # Organizations, leave it off when it does not.
+      # - --features=organization
+      # Every theme cache off, so an edit under src/theme shows on reload.
+      # ⚠️ The BROWSER still caches theme resources. When a change "does not
+      # apply", load the stylesheet with a cache-busting query (?v=<anything>)
+      # or a hard reload with devtools' "Disable cache" on, before concluding
+      # anything.
+      - --spi-theme-static-max-age=-1
+      - --spi-theme-cache-themes=false
+      - --spi-theme-cache-templates=false
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_SPI_EMAIL_TRANSPORT_PROVIDER: smtp
+      KC_SPI_EMAIL_SMTP_HOST: mailhog
+      KC_SPI_EMAIL_SMTP_PORT: 1025
+      KC_SPI_EMAIL_SMTP_FROM: "noreply@theme.local"
+    ports:
+      # 8087 rather than 8080, so this can sit beside anything else already
+      # bound there. The app itself talks to its real Keycloak, never to this.
+      - "${KC_PORT:-8087}:8080"      # KC_PORT=8088 ./dev/preview.sh to run beside another
+    volumes:
+      # Throwaway realm data — gitignore dev/kc-data and delete the directory
+      # to start over.
+      - ./kc-data:/opt/keycloak/data
+      # src/theme is laid out as a themes directory, so this is the same tree
+      # build.sh packs into the jar. No copy to fall out of step.
+      - ../src/theme:/opt/keycloak/themes:ro
+    depends_on:
+      - mailhog
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: __CONTAINER__-mail
+    ports:
+      - "${MAIL_PORT:-8025}:8025"    # MailHog web UI (MAIL_PORT)

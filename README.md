@@ -16,6 +16,8 @@ explains what is in here: what each thing does, when to use it, and how to add y
 | [`/re-brain`](#re-brain) | Command | Any **backend / server** work in RE-Frame (Express routes, validators, controllers, services) | `/re-brain <task>` |
 | [`/build`](#build) | Command | Carrying out a written implementation plan, step by step | `/build <path-or-link-to-plan>` |
 | [`/asvs5-audit`](#asvs5-audit) | Command + Skill | An OWASP ASVS 5.0.0 security audit that produces a standard report you can diff between runs | `/asvs5-audit [L1\|L2\|L3] [url] [t1]` |
+| [`/keycloak-theme-user`](#keycloak-theme-user-and-keycloak-theme-full) | Command + Skill | Keycloak styled like this project (or a design): login, register, password, account console, mails | `/keycloak-theme-user [design-url] [name]` |
+| [`/keycloak-theme-full`](#keycloak-theme-user-and-keycloak-theme-full) | Command + Skill | The same, **plus the admin console** fully restyled | `/keycloak-theme-full [design-url] [name]` |
 
 ---
 
@@ -28,6 +30,11 @@ explains what is in here: what each thing does, when to use it, and how to add y
 | Good for | Conventions, checklists, short procedures | Large procedures with reference data Claude should read only when it needs it |
 
 Text you type after a command is passed in as `$ARGUMENTS`, e.g. `/build docs/plans/orders.md`.
+
+**Rule of thumb:** a *command* is **what you want done** (a short prompt you trigger on purpose); a
+*skill* is **how to do it** (the knowledge, templates and scripts). When several commands need the
+same know-how, put the know-how in one skill and make each command a thin entry point that loads
+it. `/asvs5-audit` and the two `/keycloak-theme-*` commands are built that way.
 
 ---
 
@@ -227,6 +234,75 @@ Details: [SKILL.md](.claude/skills/asvs5-audit/SKILL.md) and the files in
 
 ---
 
+### `/keycloak-theme-user` and `/keycloak-theme-full`
+
+**Files:** [.claude/commands/keycloak-theme-user.md](.claude/commands/keycloak-theme-user.md),
+[.claude/commands/keycloak-theme-full.md](.claude/commands/keycloak-theme-full.md) (entry points)
+and [.claude/skills/keycloak-theme/](.claude/skills/keycloak-theme/) (the procedure, starter theme
+and checks they share)
+
+Builds a Keycloak theme that looks like it belongs to the product. The two commands differ in
+**how much** of Keycloak gets styled:
+
+| Command | Styles |
+| ------- | ------ |
+| `/keycloak-theme-user` | every page an end user meets: sign in, register, forgot or update password, OTP and friends, the **account console** (personal info, password, sessions) and the **mails** |
+| `/keycloak-theme-full` | all of the above **plus the admin console**, fully restyled |
+
+Both take the look from **this project** by default. Pass a **design link** (Figma, a Claude
+Design / claude.ai link, a tokens export or screenshots) to rebuild that design instead:
+
+```text
+/keycloak-theme-user                          # look like this repo's app
+/keycloak-theme-user https://claude.ai/... Alert   # look like that design, theme named Alert
+/keycloak-theme-full                          # this repo's look, admin console included
+```
+
+You can also just ask ("make our Keycloak login match the app"); Claude loads the skill by itself.
+
+**What to expect:**
+
+1. **First: which Keycloak version production runs.** Claude checks it against the latest release
+   and, when production is behind, also audits the theme against the newer version's pages, so an
+   upgrade does not surprise you. Then a few more questions only the humans know: realm, web client
+   id, Organizations on/off, locales, which footer links (and their URLs per language), where to
+   put the theme, and for `full` whether the admin restyle may apply to every realm.
+2. A **token sheet** in the theme README: every colour, font and shape, with where it came from
+   (project token, design variable, `DERIVED` or `DEVIATION`) and its measured contrast.
+3. A theme scaffolded from the skill's starter: `src/theme/<Name>/{login,account,email[,admin]}`,
+   `build.sh`, `dev/` (version-pinned Keycloak + MailHog, `preview.sh`) and `tools/`.
+4. `build.sh` produces **one standalone jar per theme** in `dist/`, behind two gates:
+   **self-contained** (fails if anything loads from outside the theme) and **coverage** (fails if a
+   page the login sequence can show has unstyled elements). Every jar works on its own and can be
+   moved between servers; variants that share a base in the source are merged into their own jar.
+5. **A running local Keycloak and a table of links**: sign in, register, forgot password, account
+   console, admin console and MailHog (with a real test mail in it), plus the test logins. It stays
+   running so you can look for yourself; `docker compose -f dev/keycloak-compose.yaml down` stops it.
+6. A README with the deploy checklist and every trap that applied.
+
+**Things to know:**
+
+- **Everything is embedded.** Fonts (woff2), logos and colours live inside the jar; nothing comes
+  from a CDN, Google Fonts or the app. Mail is the one exception: mail clients block embedded
+  images, so mails are text-branded unless you explicitly opt in to hosted images.
+- Design mode works with a Claude Design link, screenshots or a tokens export. A **Figma** link
+  needs the Figma connector authorised. A commercial font in a design means you supply the
+  licensed webfont files.
+- Keycloak's page structure is fixed. A design is rebuilt as a **visual language**, not as markup.
+  Claude tells you up front what will differ.
+- The admin theme is chosen by the realm you **sign in to** (usually `master`), so a full restyle
+  shows up for every realm on that Keycloak, unless you ask for the realm gate.
+- The theme is verified against **one Keycloak version**. Audit the version you upgrade to before
+  upgrading.
+- Nothing is committed and no realm config is applied to production; you get the settings to click.
+- Needs `node` (gates) and Docker (preview). Packing uses `zip`; on Windows without it,
+  `build.sh` falls back to the system's `tar.exe`.
+
+Details: [SKILL.md](.claude/skills/keycloak-theme/SKILL.md) and
+[references/](.claude/skills/keycloak-theme/references/).
+
+---
+
 ## Repository layout
 
 ```text
@@ -236,13 +312,21 @@ Details: [SKILL.md](.claude/skills/asvs5-audit/SKILL.md) and the files in
 │   ├── re-frame.md         /re-frame     (client conventions)
 │   ├── re-brain.md         /re-brain     (server conventions)
 │   ├── build.md            /build
-│   └── asvs5-audit.md      /asvs5-audit  (entry point for the skill below)
+│   ├── asvs5-audit.md      /asvs5-audit  (entry point for the skill below)
+│   ├── keycloak-theme-user.md   /keycloak-theme-user
+│   └── keycloak-theme-full.md   /keycloak-theme-full
 └── skills/
-    └── asvs5-audit/
-        ├── SKILL.md        procedure, status vocabulary, scoring
-        ├── references/     catalog (345 reqs), tier checklists, scoring, report spec
-        ├── assets/         report skeletons for L1 / L2 / L3
-        └── scripts/        optional awk helpers (tally, diff)
+    ├── asvs5-audit/
+    │   ├── SKILL.md        procedure, status vocabulary, scoring
+    │   ├── references/     catalog (345 reqs), tier checklists, scoring, report spec
+    │   ├── assets/         report skeletons for L1 / L2 / L3
+    │   └── scripts/        optional awk helpers (tally, diff)
+    └── keycloak-theme/
+        ├── SKILL.md        procedure shared by both keycloak-theme commands (scope x source)
+        ├── references/     token sources (project / design), embed rule, login, account,
+        │                   email, admin, verification, deploy
+        ├── assets/starter/ generic theme: src/, build.sh, dev compose, tools/
+        └── scripts/        check-self-contained, contrast, screenshot (node, no deps)
 ```
 
 ---

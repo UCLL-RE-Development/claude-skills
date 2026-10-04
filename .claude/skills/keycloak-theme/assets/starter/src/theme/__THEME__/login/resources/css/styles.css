@@ -1,0 +1,1947 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   __THEME__ login theme — STARTER from the keycloak-theme skill
+   ───────────────────────────────────────────────────────────────────────────
+   What to fill in:
+     1. the @font-face blocks (font files go in ../fonts/, one per weight used)
+     2. every value in :root marked `SOURCE: ?` — from the project's token file,
+        keeping each one's contrast budget
+     3. --p-gradient, if the project's page ground is not flat
+   Nothing below :root should need an edit: after it there are NO colour
+   literals, only var(--p-…). The lessons behind every ⚠️ are in
+   `references/login.md` of the keycloak-theme skill.
+
+   The whole login sequence, drawn in the product's own surface: a card on the
+   product's own page ground, its own ink, its own type. Someone who clicks
+   "Login" in the app should not feel they have left it.
+
+   Colour and type: the project's token file, same values, with the project's
+   token name in a comment beside each one so the two files can be diffed by
+   eye. Card, field and button shapes: the source design's own card, input and
+   button components.
+
+   ── Why this file styles EVERYTHING ────────────────────────────────────────
+   theme.properties pins every `kc*Class` property to its own literal name
+   (`kcInputClass=kcInputClass`) and loads no PatternFly, no Bootstrap and no
+   icon font. So the cascade in this page is: browser defaults, then this file.
+   There is nothing else to override and nothing else to fight.
+
+   ── Single light cut (the starter default) ─────────────────────────────────
+   No dark variant and no prefers-color-scheme branch: `theme.properties` sets
+   `x-kte-color-mode=light`, so the browser paints scrollbars, autofill and the
+   password reveal light to match. If the app is dark-only, the :root below
+   must be the DARK cut and `color-scheme` on html.kcHtmlClass becomes `dark`;
+   if the app follows the OS, add a dark :root under `.kcDarkModeClass`. Never
+   follow the OS preference unless the app itself does.
+
+   ⚠️ A `*` followed by `/` inside a comment closes it early — never write a
+   glob path in prose here. The rest of the comment is then parsed as CSS.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ───────────────────────────────────────────────────────────────────
+   Self-hosted. Keycloak serves the login page from its OWN origin, not the
+   app's, so the app's own font URLs would 404 (and a third-party font CDN is
+   an extra origin on the one page that handles credentials). Copy the SAME
+   files the app loads into ../fonts/, declared exactly as the app declares
+   them — so a glyph that renders in the app renders here.
+
+   One block per weight actually used. This stylesheet uses 400, 600 and 700
+   (500 also appears below; without a 500 face the browser picks the nearest
+   declared weight, which is fine — or add a 500 block if the project ships
+   one). Ship only weights that are used: every unused face is dead weight in
+   the jar.
+
+   If the heading family (__FONT_HEAD__) differs from the UI family, the skill
+   adds a matching set of @font-face blocks for it here, with its own files.
+
+   ⚠️ No italic: if the brand font ships no italic face, do not declare one and
+   do not use `font-style: italic` anywhere — the browser would synthesise an
+   oblique, a mechanical slant that reads as a rendering fault rather than as
+   emphasis. Nothing in this file uses italic. */
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 400; font-display: swap;
+             src: url('../fonts/__FONT_UI_400__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 600; font-display: swap;
+             src: url('../fonts/__FONT_UI_600__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 700; font-display: swap;
+             src: url('../fonts/__FONT_UI_700__.woff2') format('woff2'); }
+
+/* ── Palette ─────────────────────────────────────────────────────────────────
+   Fill every `SOURCE: ?` with the project's token name and value. Measure each
+   value against the card (--p-canvas) and write the ratio in the comment. All
+   TEXT must pass WCAG AA (4.5:1) at the size it is used; anything below 4.5:1
+   is marked decorative and carries no text. UI boundaries a user has to find
+   (field borders, focus) need 3:1. Any value that departs from the project's
+   own token to meet those is a DEVIATION: flag it inline and record it.
+
+   The defaults below are a neutral slate/indigo palette that already clears
+   every budget stated, so the starter renders correctly before it is filled. */
+:root {
+    --p-canvas:      #FFFFFF;   /* SOURCE: ?  — the card ground; every ratio below is measured on it */
+    --p-raised:      #FFFFFF;   /* SOURCE: ?  — fields, quiet buttons; may equal --p-canvas (see below) */
+    /* ⚠️ In many palettes the input background and the card are the SAME token,
+       so a field is defined by its border, not by its fill — which is why
+       --p-border-mid below has to stay visible on its own (≥3:1). It also means
+       a read-only field cannot be marked by "the plain surface instead of the
+       subtle one", the way a palette with three surface steps would: there is
+       no third step. Hence --p-quiet. */
+    --p-quiet:       #EAEEF3;   /* SOURCE: ?  — read-only fields; one step down the neutral ramp, must differ visibly from --p-raised; --p-text-3 needs ≥4.5:1 on it */
+    --p-border:      #D3D9E0;   /* SOURCE: ?  — card / hairlines, also the hover fill; decorative, --p-text needs ≥4.5:1 on it */
+    --p-border-mid:  #7B8794;   /* SOURCE: ?  — field + button borders; needs ≥3:1 on --p-canvas (WCAG 1.4.11) */
+    --p-line:        #E4E7EB;   /* SOURCE: ?  — quiet separators; decorative */
+    --p-text:        #1F2933;   /* SOURCE: ?  — body ink, needs ≥4.5:1 on --p-canvas */
+    --p-text-2:      #3E4C59;   /* SOURCE: ?  — secondary ink, needs ≥4.5:1 on --p-canvas */
+    --p-text-3:      #52606D;   /* SOURCE: ?  — muted ink (labels, eyebrow, footer links), needs ≥4.5:1 on --p-canvas, --p-quiet AND --p-surface */
+    --p-text-faint:  #9AA5B1;   /* SOURCE: ?  — decorative only: placeholders and chevrons, never copy */
+
+    /* The accent. Measure the project's primary twice: as INK on the card and
+       as a FILL behind --p-ink. If it clears 4.5:1 both ways, one token can be
+       the link colour, the button fill, the border and the focus ring, and
+       --p-accent / --p-accent-text are the same value. If it does not — a
+       light or saturated brand colour usually fails as ink — keep the brand
+       value in --p-accent for borders, checkboxes and markers, and put a
+       darker cut of the same hue in --p-accent-text for links and fills. */
+    --p-accent:      #4F46E5;   /* SOURCE: ?  — brand primary: borders, checkbox fill, markers; needs ≥3:1 on --p-canvas */
+    --p-accent-text: #4338CA;   /* SOURCE: ?  — links, primary-button fill; needs ≥4.5:1 on --p-canvas AND behind --p-ink */
+    --p-accent-hi:   #3730A3;   /* SOURCE: ?  — :hover of the above; needs ≥4.5:1 both ways */
+    --p-accent-soft: #E0E7FF;   /* SOURCE: ?  — quiet fills; decorative */
+    --p-ink:         #FFFFFF;   /* SOURCE: ?  — text ON the accent and destructive fills */
+
+    /* Focus. If the source design has a focus convention, copy it; if it has
+       none, build one from the palette: the accent, which must be ≥3:1 on the
+       field so it is unmissable, with a translucent halo of the same. */
+    --p-focus:       #4F46E5;   /* SOURCE: ?  — focus border/outline; needs ≥3:1 on --p-raised */
+    --p-focus-ring:  0 0 0 3px color-mix(in srgb, var(--p-focus) 25%, transparent);
+
+    /* Status. Each status has TWO tokens, split by job:
+         --p-<status>       the project's own value — FILLS, rules, dots, icons
+         --p-<status>-text  INK — must clear 4.5:1 on --p-canvas
+       Status colours are usually pitched for a filled badge and fail as ink. If
+       the project's success/warning/error token fails as ink, add a darker
+       `-text` deviation: the same hue and saturation, darkened until it clears
+       ~5:1 on the card — so it still reads as the same colour beside the app's
+       own badge, and still clears 4.5:1 on the page ground. Record each one. */
+    --p-online:      #2E9E6B;   /* SOURCE: ?  — success fills, dots, icons; decorative */
+    --p-online-text: #1D7350;   /* SOURCE: ?  — success ink, needs ≥4.5:1 on --p-canvas */
+    --p-warn:        #E8890C;   /* SOURCE: ?  — warning fills, rules, icons; decorative */
+    --p-warn-text:   #9A5208;   /* SOURCE: ?  — warning ink, needs ≥4.5:1 on --p-canvas */
+    /* ⚠️ --p-alert is DECORATIVE ONLY unless it measures ≥4.5:1 both on the
+       card and behind --p-ink: a rule, a left border, a field outline. It may
+       not carry text and may not be the ground under text — which rules out a
+       destructive BUTTON, whose whole job is a label on a red fill. That is not
+       hypothetical: a Delete button shipped at 3.55:1 because it was filled
+       with the decorative error token. --p-alert-text is the same hue cleared
+       to ≥4.5:1, and serves as both the ink and that fill. */
+    --p-alert:       #E5484D;   /* SOURCE: ?  — error rules, field outlines; ≥3:1 on --p-canvas, never text */
+    --p-alert-text:  #B42318;   /* SOURCE: ?  — error ink AND destructive fill; needs ≥4.5:1 on --p-canvas AND behind --p-ink */
+    --p-alert-hi:    #8F1B13;   /* SOURCE: ?  — destructive :hover; needs ≥4.5:1 behind --p-ink */
+
+    --p-font-head:   '__FONT_HEAD__', system-ui, sans-serif;  /* SOURCE: ?  — heading family */
+    --p-font-ui:     '__FONT_UI__', system-ui, sans-serif;    /* SOURCE: ?  — UI/body family. Keep the two
+                       names apart even when the project uses one family for
+                       both, so a future split needs no edit below. */
+    /* For the handful of places where character-by-character legibility is
+       the point — passwords, recovery codes, a TOTP secret, a device code — and
+       nowhere else. Use the project's mono if it has one. */
+    --p-font-mono:   ui-monospace, SFMono-Regular, Menlo, monospace;  /* SOURCE: ?  */
+
+    --p-col:         376px;     /* SOURCE: ?  — column width */
+    --p-radius:      8px;       /* SOURCE: ?  — fields, buttons, small chips */
+    --p-radius-md:   12px;      /* SOURCE: ?  — panels, popovers */
+    --p-radius-lg:   15px;      /* SOURCE: ?  — the card */
+    --p-shadow:      0 4px 12px rgba(0, 0, 0, 0.1);   /* SOURCE: ?  — the card */
+    --p-shadow-pop:  0 6px 16px rgba(0, 0, 0, 0.14);  /* SOURCE: ?  — one step up: popovers */
+
+    /* The page ground. Flat by default. If the project paints its page with a
+       gradient, paste its stops here verbatim from the project's html/body
+       rule, each with its token name in a comment, e.g.
+           linear-gradient(180deg, <stop 1> 0%, <stop 2> 18%, <stop 3> 100%)
+       and set --p-surface below to the LAST stop. --p-text-3 must still clear
+       4.5:1 on the darkest stop, because the eyebrow sits on it. */
+    --p-gradient:    linear-gradient(var(--p-surface), var(--p-surface));  /* SOURCE: ?  — page ground */
+    /* The flat tone behind the gradient, so overscroll at the bottom does not
+       flash a different colour. Matches the gradient's last stop. */
+    --p-surface:     #F4F6F9;   /* SOURCE: ?  — page ground / gradient's last stop */
+}
+
+/* ── Page ──────────────────────────────────────────────────────────────────── */
+html.kcHtmlClass {
+    /* Not 100% — a page that grows past the viewport (a long error, the OTP
+       list) must be able to. min-height on the flex parent centres short pages
+       and lets tall ones scroll. */
+    min-height: 100%;
+    background: var(--p-surface);
+    /* ⚠️ Declared here, not left to the `<meta name="color-scheme">` the
+       template emits: measured in Chrome, the meta left the computed value at
+       `normal`. In CSS it applies, which is what pins the native controls, the
+       scrollbar and Chrome's autofill overlay to the light scheme even for a
+       visitor whose OS is in dark mode. A dark-only cut sets `dark` here. */
+    color-scheme: light;
+}
+
+/* ⚠️ `[hidden]` is a user-agent rule, so it carries the lowest possible weight
+   and ANY explicit `display` in this file beats it. `.kcFormGroupClass` is
+   `display: flex`, so a form group hidden from script stays fully on screen
+   with `hidden` set. This is not a Keycloak quirk but a CSS one; many app
+   stylesheets carry the identical rule for the same reason. */
+[hidden] {
+    display: none !important;
+}
+
+body.kcBodyClass {
+    margin: 0;
+    background: var(--p-surface);
+    color: var(--p-text);
+    font-family: var(--p-font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    /* Match the source design's body tracking; `normal` if it sets none. */
+    letter-spacing: 0.5px;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* `.kcLoginClass` too: this theme's own template emits `.kcLogin`, but base's
+   template.ftl — which renders if this theme's copy is ever removed — emits
+   `.kcLoginClass` for the same wrapper. */
+.kcLogin,
+.kcLoginClass {
+    box-sizing: border-box;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Vertical padding so a tall page never touches the viewport edge, and a
+       side gutter so a 360px phone keeps its margins. */
+    padding: 40px clamp(18px, 5%, 32px);
+    /* The page ground, on the element that is `min-height: 100dvh` — so it
+       always fills the viewport and stretches with a tall page (a long error,
+       the OTP device list) rather than banding and repeating.
+       `html` and `body` stay on the flat --p-surface behind it, which is the
+       gradient's last stop, so overscroll at either end does not flash a
+       different tone. */
+    background: var(--p-gradient);
+}
+
+.kcLoginContainer {
+    width: 100%;
+    /* max-width, not a bare width: below the column + gutter the column has to
+       give, and a fixed width would scroll the page sideways on a 360px phone. */
+    max-width: var(--p-col);
+}
+
+/* The frame around brand + card. Transparent: the card is the form body alone,
+   with the lock-up sitting on the page above it. */
+.kcLoginMain {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: none;
+    border: none;
+}
+
+/* ── Brand lock-up ─────────────────────────────────────────────────────────── */
+.kcLoginMainHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#kc-header,
+#kc-header-wrapper,
+.kcHeaderClass,
+.kcHeaderWrapperClass {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+/* The lock-up: the project's mark, img/logo.svg. Two cases, switched by
+   `x-brand-wordmark` in theme.properties:
+
+   false — the name is knocked out of / set into the artwork as VECTOR PATHS,
+           so the file is the mark AND the wordmark. Being paths, it renders
+           identically inside `<img>`, which is a sandboxed context no external
+           font can reach. One element, sized here.
+   true  — the artwork is a bare mark and the name is typed beside it in
+           `.kcBrandWordmark`, where this file's @font-face applies.
+
+   ⚠️ Live SVG <text> inside an <img> renders in the CLIENT's fallback font. If
+   the logo has lettering, either outline it to paths or use the wordmark.
+
+   Sized by width with the height left to follow, because most artwork is not
+   square and pinning both would squash it. 128px on a 376px column when the
+   image is the whole lock-up — it is the only brand on the page. */
+#kc-brand-mark {
+    display: block;
+    width: 128px;
+    height: auto;
+    flex: none;
+}
+/* With a typed wordmark the image is only the mark, so it steps down. */
+#kc-header-wrapper:has(.kcBrandWordmark) #kc-brand-mark {
+    width: 56px;
+}
+
+/* The typed wordmark (x-brand-wordmark=true). Heading face, body ink. */
+.kcBrandWordmark {
+    display: block;
+    font: 700 22px/1.2 var(--p-font-head);
+    letter-spacing: 0.01em;
+    color: var(--p-text);
+    text-wrap: balance;
+}
+
+/* The eyebrow, filled by Keycloak's page title — see the comment in
+   template.ftl. Smaller than the lock-up above it, uppercase and muted, because
+   it is a label for the page rather than the page's own voice. It sits on the
+   page ground, so --p-text-3 must clear 4.5:1 on --p-surface too. */
+.kcLoginMainTitle {
+    margin: 0;
+    font: 600 11px/1.5 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+    text-align: center;
+    text-wrap: balance;
+}
+
+/* ── The card ──────────────────────────────────────────────────────────────── */
+.kcLoginMainBody {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px;
+    background: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    /* The source design's card: its radius, its border, its shadow. */
+    border-radius: var(--p-radius-lg);
+    box-shadow: var(--p-shadow);
+}
+
+/* ── Form groups ───────────────────────────────────────────────────────────── */
+/* login.ftl wraps every field in .kcFormGroupClass and the form itself has no
+   gap, so the spacing lives here. */
+#kc-form,
+#kc-form-wrapper,
+.kcFormClass,
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.kcFormGroupClass {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* base/login/login.ftl emits a bare <hr> inside a form group on some pages. */
+.kcFormGroupClass hr {
+    display: none;
+}
+
+.kcLabelClass,
+.kcFormLabelClass,
+.kcFormGroupLabelClass {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+.kcInputRequiredClass {
+    /* Ink, not decoration — so --p-alert-text, never --p-alert. */
+    color: var(--p-alert-text);
+    margin-inline-end: 2px;
+}
+
+/* ── Inputs ────────────────────────────────────────────────────────────────── */
+.kcInputClass,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+/* ⚠️ A bare `<input>` defaults to type=text but matches none of the selectors
+   above. `login-recovery-authn-code-input.ftl` writes exactly that — no type
+   attribute and no kcInputClass — so the recovery-code field rendered as an
+   unstyled browser input in the middle of a themed card. `:not([type])` rather
+   than a bare `input`, which would also catch checkboxes and radios and stretch
+   them to 36px. */
+input:not([type]),
+select,
+textarea {
+    box-sizing: border-box;
+    width: 100%;
+    height: 36px;
+    padding: 0 11px;
+    /* The source design's own worked-out input: its ground, its hairline, its
+       radius. Where the project has two field styles, copy the one that is
+       actually used in its forms. */
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    color: var(--p-text);
+    font: 400 14px/1 var(--p-font-ui);
+    letter-spacing: 0.4px;
+    /* Colour only, never layout. */
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea {
+    height: auto;
+    min-height: 84px;
+    padding: 9px 11px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+/* Only the fields where character-by-character legibility is the point: a
+   passphrase you want to count, and codes transcribed from somewhere else.
+   Email and username stay in the body face — putting an address in a mono face
+   here would read as a different product. */
+input[type="password"],
+input[inputmode="numeric"],
+input[name="totp"],
+input[name="recoveryCodeInput"] {
+    font-family: var(--p-font-mono);
+    letter-spacing: normal;
+}
+
+.kcInputClass:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    /* The focus border plus a translucent ring of the same colour. */
+    border-color: var(--p-focus);
+    box-shadow: var(--p-focus-ring);
+}
+
+/* Keyboard users get the ring on every control, not just inputs. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--p-focus);
+    outline-offset: 2px;
+}
+.kcInputClass:focus-visible,
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    /* Already carried by the :focus rule above; a second offset ring on top of
+       it reads as a double border. */
+    outline: none;
+}
+
+.kcInputClass::placeholder {
+    color: var(--p-text-faint);
+}
+
+.kcInputClass[aria-invalid="true"],
+input[aria-invalid="true"] {
+    border-color: var(--p-alert);
+}
+
+/* Read-only — the "you are signing in as …" field on the OTP and
+   reset-credentials pages, and the username field on update-profile.
+
+   ⚠️ It must NOT be `var(--p-canvas)` when --p-raised equals --p-canvas.
+   Painting a read-only field in the canvas tone then makes it pixel-identical
+   to an editable one and only the cursor says otherwise. --p-quiet is a step
+   down the neutral ramp; the text goes to --p-text-3, which must still clear
+   4.5:1 on it. */
+.kcFormReadOnlyClass,
+.kcInputClass[readonly],
+input[readonly] {
+    background: var(--p-quiet);
+    color: var(--p-text-3);
+    cursor: default;
+}
+
+/* Chrome paints its own pale yellow over autofilled inputs, which reads as a
+   different control. An inset shadow, because background-color is not
+   honoured on an autofilled control. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--p-text);
+    box-shadow: inset 0 0 0 100px var(--p-raised);
+    caret-color: var(--p-text);
+}
+
+/* ── Input groups (password + reveal, username + restart) ──────────────────── */
+/* template.ftl and login.ftl wrap these in .kcInputGroup with the control and
+   the button as siblings; they read as one field. */
+.kcInputGroup {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.kcInputGroupItemClass {
+    display: flex;
+    min-width: 0;
+}
+
+.kcFill {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* The seam: the input loses its right corners, the button its left ones, so the
+   pair looks like a single 36px field rather than two adjacent controls. */
+.kcInputGroup > .kcInputClass:not(:last-child),
+.kcInputGroup > .kcInputGroupItemClass:not(:last-child) .kcInputClass,
+.kcInputGroup > .kcInputGroupItemClass:not(:last-child) > span.kcInputClass {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+    border-inline-end: none;
+}
+
+/* The read-only username sits in a <span class="kcInputClass"> wrapping a bare
+   <input>, so the span is the box and the input has to disappear into it. */
+span.kcInputClass {
+    display: flex;
+    align-items: center;
+}
+span.kcInputClass > input {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: inherit;
+    font: inherit;
+}
+span.kcInputClass > input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* ── The reveal / restart button in an input group ─────────────────────────── */
+.kcFormPasswordVisibilityButtonClass {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 38px;
+    height: 36px;
+    padding: 0;
+    background: var(--p-raised);
+    /* The same border as the field it is welded to — see the seam rule above. */
+    border: 1px solid var(--p-border);
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    border-start-end-radius: var(--p-radius);
+    border-end-end-radius: var(--p-radius);
+    color: var(--p-text-3);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.kcFormPasswordVisibilityButtonClass:hover {
+    background: var(--p-border);
+    color: var(--p-text);
+}
+/* The input drops its right-hand border into the seam, so on focus the focus
+   colour runs round three sides and the button's own hairline closes the
+   fourth in a different colour. The pair is one field — it lights up as one.
+
+   ⚠️ TWO SHAPES, and both have to be listed. Base nests the group differently
+   per page: `login.ftl` and template.ftl's @username macro wrap the control in
+   `.kcInputGroupItemClass`, while `register.ftl` puts the input as a DIRECT
+   child of `.kcInputGroup`. Matching only the nested path lit the button on
+   focus and left the input behind on the register page. The seam rule above
+   already lists both; these must too. */
+.kcInputGroup:focus-within .kcFormPasswordVisibilityButtonClass,
+.kcInputGroup:focus-within > .kcInputClass,
+.kcInputGroup:focus-within > .kcInputGroupItemClass .kcInputClass {
+    border-color: var(--p-focus);
+}
+
+/* ⚠️ The same seam, in the ERROR state — and it needs its own rule, because the
+   two states are signalled completely differently. Focus is a pseudo-class on
+   the group; invalidity is `aria-invalid="true"` on the INPUT, and Keycloak
+   puts no class on the group at all. So the group is reached with `:has()`.
+
+   Without this, an errored password field is error-coloured on three sides and
+   the reveal button closes the fourth — and outlines itself — in --p-border
+   grey, so the control reads as half-errored. Found on the register page by
+   submitting it empty.
+
+   `:not(:focus-within)` makes the two mutually exclusive rather than relying on
+   source order, which would not settle it here: `:has()` takes the specificity
+   of its argument, so the error rule outweighs the focus rule and would win
+   even while the user is typing in the field. Focus is the state they are
+   acting on, so focus wins.
+
+   Both group shapes are listed here for the same reason as the focus rule. */
+.kcInputGroup:not(:focus-within):has(input[aria-invalid="true"]) .kcFormPasswordVisibilityButtonClass,
+.kcInputGroup:not(:focus-within):has(input[aria-invalid="true"]) > .kcInputClass,
+.kcInputGroup:not(:focus-within):has(input[aria-invalid="true"]) > .kcInputGroupItemClass .kcInputClass {
+    border-color: var(--p-alert);
+}
+
+/* ⚠️ And the seam once more, in the READ-ONLY state — the "you are signing in
+   as …" field, which is a group too: the greyed field plus the restart-login
+   button. The button's resting fill is --p-raised, the field's is --p-quiet, so
+   without this the welded pair comes out two-tone (found on the identity-first
+   password page). Three states, three rules: whenever a rule changes how a
+   field in a group looks, check whether the button beside it follows.
+
+   The button stays live here — it restarts the login — so only its resting fill
+   moves; :hover above still lifts it. */
+.kcInputGroup:has(.kcFormReadOnlyClass) .kcFormPasswordVisibilityButtonClass,
+.kcInputGroup:has(input[readonly]) .kcFormPasswordVisibilityButtonClass {
+    background: var(--p-quiet);
+}
+
+/* ⚠️ The eye. passwordVisibility.js does NOT set a data attribute — it swaps
+   the <i>'s className between kcFormPasswordVisibilityIconShow and
+   ...IconHide (see data-icon-show / data-icon-hide in login.ftl). So the icon
+   is drawn on those two classes. The stock theme keys its "hide" state off
+   `[data-password-visible="true"]`, which nothing in Keycloak ever sets: that
+   rule cannot match, and the crossed-out eye never appears.
+   (The masks below are alpha-only: the `black` inside the data URIs is the
+   mask shape, not a colour — the glyph paints in currentColor.) */
+.kcFormPasswordVisibilityIconShow,
+.kcFormPasswordVisibilityIconHide {
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+.kcFormPasswordVisibilityIconShow {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 5c-5 0-9.27 3.11-11 7 1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 5c-5 0-9.27 3.11-11 7 1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3C/svg%3E");
+}
+.kcFormPasswordVisibilityIconHide {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 5c-5 0-9.27 3.11-11 7 1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3Cpath d='M3 3l18 18' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 5c-5 0-9.27 3.11-11 7 1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z'/%3E%3Cpath d='M3 3l18 18' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* The restart-login button next to a read-only username. */
+.kc-login-tooltip { position: relative; }
+.kc-login-tooltip .kc-icon { display: block; }
+.kc-tooltip-text {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 10;
+    width: max-content;
+    max-width: 200px;
+    padding: 6px 9px;
+    background: var(--p-canvas);
+    border: 1px solid var(--p-border-mid);
+    border-radius: var(--p-radius);
+    box-shadow: var(--p-shadow-pop);
+    color: var(--p-text-2);
+    font: 400 12px/1.4 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    opacity: 0;
+    /* Hidden but reachable: the button's aria-label carries the same words, so
+       screen readers already have it; this is the sighted hover affordance. */
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+.kc-login-tooltip:hover .kc-tooltip-text,
+.kc-login-tooltip:focus-visible .kc-tooltip-text {
+    opacity: 1;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+/* The source design's button: its radius, a 2px border so the outline variant
+   does not shift, the heading face at the button weight. */
+.kcButtonClass {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 18px;
+    border: 2px solid var(--p-border-mid);
+    border-radius: var(--p-radius);
+    background: var(--p-raised);
+    color: var(--p-text);
+    font: 600 13px/1 var(--p-font-head);
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    /* `input[type=submit]` inherits the OS font otherwise. */
+    font-family: var(--p-font-head);
+}
+.kcButtonClass:hover {
+    background: var(--p-border);
+    color: var(--p-text);
+}
+
+/* The primary — filled with --p-accent-text rather than --p-accent itself so
+   the 13px inverse label clears AA whatever the brand primary measures. See
+   the accent note in :root. */
+.kcButtonPrimaryClass {
+    background: var(--p-accent-text);
+    border-color: transparent;
+    color: var(--p-ink);
+}
+.kcButtonPrimaryClass:hover {
+    background: var(--p-accent-hi);
+    border-color: transparent;
+    color: var(--p-ink);
+}
+
+/* The outline variant: transparent, accent border and accent text. */
+.kcButtonSecondaryClass {
+    background: transparent;
+    border-color: var(--p-accent-text);
+    color: var(--p-accent-text);
+}
+.kcButtonSecondaryClass:hover {
+    background: var(--p-raised);
+    border-color: var(--p-accent-hi);
+    color: var(--p-accent-hi);
+}
+
+.kcButtonBlockClass {
+    display: flex;
+    width: 100%;
+}
+
+.kcButtonLargeClass {
+    height: 40px;
+}
+
+.kcButtonClass:disabled,
+.kcButtonClass[aria-disabled="true"],
+.kcFormSocialAccountListButtonDisabledClass {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.kcButtonLinkClass {
+    height: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--p-accent-text);
+    font: 500 13px/1.5 var(--p-font-ui);
+    text-decoration: underline;
+}
+.kcButtonLinkClass:hover {
+    background: none;
+    color: var(--p-accent-hi);
+    text-decoration: underline;
+}
+
+/* login.ftl also puts a hidden input in here; the gap must not become a
+   phantom row above the button. Scoped to the sign-in form: the same id holds
+   submit + Cancel on update-password, logout and others, and gap 0 glued those
+   two buttons together. */
+#kc-form-login #kc-form-buttons {
+    gap: 0;
+}
+
+/* ── Options row: remember-me and forgot-password ──────────────────────────── */
+.kcFormSettingClass {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.kcFormSettingClass:empty { display: none; }
+
+#kc-form-options:empty { display: none; }
+
+.kcFormOptionsWrapperClass {
+    margin-inline-start: auto;
+}
+
+.checkbox,
+.kcCheckboxClass {
+    display: flex;
+    align-items: center;
+}
+.checkbox label,
+.kcCheckboxLabelClass {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 400 13px/1 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-2);
+    cursor: pointer;
+}
+.checkbox input[type="checkbox"],
+input[type="checkbox"],
+input[type="radio"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    flex: none;
+    /* Paints the box in the brand accent instead of the browser blue. */
+    accent-color: var(--p-accent);
+    cursor: pointer;
+}
+
+/* ── Links ─────────────────────────────────────────────────────────────────── */
+/* The source design's `a` / `a:hover`, underline included — links are not
+   distinguished by colour alone (WCAG 1.4.1). */
+a {
+    color: var(--p-accent-text);
+    text-decoration: underline;
+}
+a:hover {
+    color: var(--p-accent-hi);
+    text-decoration: underline;
+}
+
+/* The small print under the card: "New user? Register", "Back to login". */
+#kc-info,
+#kc-info-wrapper,
+#kc-registration-container,
+#kc-registration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font: 400 12px/1.5 var(--p-font-ui);
+    color: var(--p-text-3);
+    text-align: center;
+}
+
+/* ── Alerts ────────────────────────────────────────────────────────────────── */
+.kcAlertClass {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    border: 1px solid var(--p-border-mid);
+    border-inline-start: 3px solid var(--p-text-3);
+    border-radius: var(--p-radius);
+    background: var(--p-raised);
+    font: 400 13px/1.5 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+.kcAlertClass[style*="display:none"] { display: none; }
+
+.kcAlertIconClass { flex: none; line-height: 1.5; }
+
+.kcAlertTitleClass,
+.kc-feedback-text {
+    margin: 0;
+    font: 400 13px/1.5 var(--p-font-ui);
+    color: var(--p-text-2);
+    overflow-wrap: anywhere;
+}
+
+.kcAlertClass.pf-m-danger {
+    border-inline-start-color: var(--p-alert);
+}
+.kcAlertClass.pf-m-danger .kcAlertTitleClass,
+.kcAlertClass.pf-m-danger .kc-feedback-text {
+    color: var(--p-alert-text);
+}
+.kcAlertClass.pf-m-warning { border-inline-start-color: var(--p-warn); }
+.kcAlertClass.pf-m-success { border-inline-start-color: var(--p-online); }
+.kcAlertClass.pf-m-info,
+.kcAlertClass.kcInfo { border-inline-start-color: var(--p-text-3); }
+
+/* No icon font in this page, so the feedback icons are text glyphs. */
+.kcFeedbackInfoIcon::before    { content: "\2139"; }
+.kcFeedbackWarningIcon::before { content: "\26A0"; }
+.kcFeedbackErrorIcon::before   { content: "\2715"; }
+.kcFeedbackSuccessIcon::before { content: "\2713"; }
+.kcFeedbackErrorIcon   { color: var(--p-alert-text); }
+.kcFeedbackWarningIcon { color: var(--p-warn); }
+.kcFeedbackSuccessIcon { color: var(--p-online); }
+.kcFeedbackInfoIcon    { color: var(--p-text-3); }
+
+/* Per-field validation message, under the input it belongs to. */
+.kcInputErrorMessageClass,
+#input-error,
+[id^="input-error"] {
+    font: 400 12px/1.45 var(--p-font-ui);
+    color: var(--p-alert-text);
+}
+
+.kcInputHelperTextClass,
+.kcInputHelperTextItemClass,
+.kcInputHelperTextItemTextClass,
+.kcFormHelperTextClass {
+    font: 400 12px/1.45 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-3);
+}
+
+/* ── Headings inside the body ──────────────────────────────────────────────── */
+.kcLoginMainBody h1,
+.kcLoginMainBody h2,
+.kcLoginMainBody h3 {
+    margin: 0;
+    font: 600 15px/1.3 var(--p-font-head);
+    letter-spacing: normal;
+    color: var(--p-text);
+    /* If the source design puts a rule under every heading: inside a 376px card
+       that reads as a divider rather than a heading, so it is deliberately not
+       carried. */
+    border: none;
+}
+.kcLoginMainBody p {
+    margin: 0;
+    font: 400 14px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+
+/* ── Social / identity providers ───────────────────────────────────────────── */
+.kcFormSocialAccountSectionClass {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.kcFormSocialAccountSectionClass hr {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
+    border: none;
+    background: var(--p-border);
+}
+.kcFormSocialAccountListClass {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.kcFormSocialAccountListGridClass {
+    display: grid;
+    /* `min(…, 100%)` so the track minimum can never exceed the container — a
+       bare minmax(150px, 1fr) overflows a 360px phone once there are two. */
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+}
+.kcFormSocialAccountListButtonClass {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    height: 40px;
+    padding: 0 14px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border-mid);
+    border-radius: var(--p-radius);
+    color: var(--p-text);
+    font: 500 13px/1 var(--p-font-head);
+    text-decoration: none;
+}
+.kcFormSocialAccountListButtonClass:hover {
+    background: var(--p-border);
+    color: var(--p-text);
+    text-decoration: none;
+}
+
+/* ── Authenticator picker ─────────────────────────────────────────────────── */
+.kcSelectAuthListClass {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.kcSelectAuthListItemClass {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    color: var(--p-text);
+    text-decoration: none;
+    cursor: pointer;
+}
+.kcSelectAuthListItemClass:hover {
+    border-color: var(--p-border-mid);
+    background: var(--p-border);
+    text-decoration: none;
+}
+.kcSelectAuthListItemHeadingClass {
+    font: 500 13px/1.3 var(--p-font-ui);
+    color: var(--p-text);
+}
+.kcSelectAuthListItemDescriptionClass {
+    font: 400 12px/1.45 var(--p-font-ui);
+    color: var(--p-text-3);
+}
+.kcSelectAuthListItemFillClass { flex: 1 1 auto; min-width: 0; }
+/* ⚠️ The chevron. select-authenticator.ftl nests
+   `div.kcSelectAuthListItemArrowClass > i.kcSelectAuthListItemArrowIconClass`,
+   so ONLY the inner element draws the glyph — putting `::before` on both
+   printed the chevron twice, which read on screen as "»". */
+.kcSelectAuthListItemArrowClass {
+    display: flex;
+    align-items: center;
+    flex: none;
+}
+.kcSelectAuthListItemArrowIconClass::before,
+.kcAngleRightIconClass::before { content: "\203A"; color: var(--p-text-3); font-size: 16px; }
+.kcAngleDownIconClass::before  { content: "\2304"; color: var(--p-text-3); }
+
+/* ── OTP device chooser ──────────────────────────────────────────────────── */
+/* ⚠️ Despite the name, `kcLoginOTPListClass` is NOT a list — login-otp.ftl puts
+   it on each `<label>`, with the radio as a flat preceding sibling:
+       input.kcLoginOTPListInputClass + label.kcLoginOTPListClass > span.…HeaderClass
+   So the radio is hidden and the label becomes the whole clickable row, with
+   `:checked + label` carrying the selected state. Styling this as a flex column
+   list, as the name suggests, stacked the radio above a full-width label. */
+.kcLoginOTPListInputClass {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    /* Not display:none — the radio must stay focusable so the row below can
+       show a focus ring for keyboard users. */
+}
+label.kcLoginOTPListClass {
+    display: block;
+    cursor: pointer;
+}
+.kcLoginOTPListItemHeaderClass {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    color: var(--p-text);
+}
+label.kcLoginOTPListClass:hover .kcLoginOTPListItemHeaderClass {
+    border-color: var(--p-border-mid);
+    background: var(--p-border);
+}
+/* Selected: the accent border plus a tick, so the choice does not rest on a
+   background shade alone. `.kcLoginOTPListSelectedClass` covers the newer
+   markup that sets it on a wrapper instead. */
+.kcLoginOTPListInputClass:checked + label .kcLoginOTPListItemHeaderClass,
+.kcLoginOTPListSelectedClass .kcLoginOTPListItemHeaderClass {
+    border-color: var(--p-accent);
+    background: var(--p-border);
+}
+.kcLoginOTPListInputClass:checked + label .kcLoginOTPListItemTitleClass::after,
+.kcLoginOTPListSelectedClass .kcLoginOTPListItemTitleClass::after {
+    content: "\2713";
+    margin-inline-start: 8px;
+    color: var(--p-accent);
+}
+.kcLoginOTPListInputClass:focus-visible + label .kcLoginOTPListItemHeaderClass {
+    outline: 2px solid var(--p-focus);
+    outline-offset: 2px;
+}
+.kcLoginOTPListItemTitleClass {
+    font: 500 13px/1.3 var(--p-font-ui);
+    color: var(--p-text);
+}
+
+/* ── Recovery codes ────────────────────────────────────────────────────────── */
+.kcRecoveryCodesWarning { color: var(--p-alert-text); }
+.kcCodeClipboardCopyClass,
+.kcCodeClipboardCopyContentClass {
+    padding: 12px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    font: 400 13px/1.7 var(--p-font-mono);
+    color: var(--p-text);
+    overflow-wrap: anywhere;
+}
+.kcCodeClipboardCopyGroupClass {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+ol, ul {
+    margin: 0;
+    padding-inline-start: 20px;
+}
+.kcListClass {
+    font: 400 13px/1.6 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+
+/* ── Panels (used by a few info pages) ─────────────────────────────────────── */
+.kcPanelClass,
+.kcFormCardClass,
+.kcPanelMainClass,
+.kcPanelMainBodyClass {
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius-md);
+    padding: 12px;
+    box-shadow: none;
+}
+
+.kcMarginTopClass { margin-top: 6px; }
+
+/* ── Footer: legal links and the language picker ───────────────────────────── */
+.kcLoginMainFooter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
+    margin-top: 2px;
+    border-top: 1px solid var(--p-line);
+}
+.kcLoginMainFooterBand,
+.kc-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.kc-footer-legal-links {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+/* The footer strip: legal links and the version, quiet but still readable —
+   these are links, so they are held at --p-text-3 (≥4.5:1) rather than the
+   fainter decorative tint. */
+.kcLoginMainFooterBandItem,
+.kcLoginMainFooterHelperText {
+    font: 600 10px/1.4 var(--p-font-head);
+    letter-spacing: 0.08em;
+    color: var(--p-text-3);
+}
+a.kcLoginMainFooterBandItem { color: var(--p-text-3); }
+a.kcLoginMainFooterBandItem:hover { color: var(--p-accent-hi); }
+
+.kc-language-select {
+    width: auto;
+    height: 30px;
+    padding: 0 8px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    color: var(--p-text-2);
+    font: 400 12px/1 var(--p-font-ui);
+}
+
+/* ── Phone ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .kcLogin { padding: 24px clamp(16px, 4%, 24px); }
+    .kcLoginMainBody { padding: 18px; }
+    /* Width only, height follows — pinning both squashes non-square artwork. */
+    #kc-brand-mark { width: 96px; height: auto; }
+    #kc-header-wrapper:has(.kcBrandWordmark) #kc-brand-mark { width: 44px; }
+    .kcBrandWordmark { font-size: 17px; }
+}
+
+/* Motion is decorative here; every transition above is colour or opacity. */
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Base-template coverage
+   ───────────────────────────────────────────────────────────────────────────
+   Everything above styles the pages this theme draws itself. `parent=base`
+   means the REST of the login sequence — reset password, OTP entry, TOTP
+   setup, update password, update profile, register, terms, verify email,
+   WebAuthn, recovery codes, device verification, x509, oauth grant, delete
+   account, error, info, page-expired, logout confirm — renders from
+   base/login/*.ftl inside this theme's shell.
+
+   Those templates use a wider set of hooks than the login page does, plus a
+   handful of Bootstrap and PatternFly class names left over from older
+   Keycloak (`.form-group`, `.control-label`, `.pficon-print`, …). Neither
+   framework is loaded here, so each of those is an unstyled hook rather than
+   a styled one — which is why they are picked up below instead of ignored.
+
+   Coverage is checked by a script, not by eye: it expands every
+   `${properties.kcFoo}` in all base templates through theme.properties and
+   reports any resulting class this file never mentions (references/login.md).
+
+   ⚠️ Declare each class once. Declaring one per section and letting the later
+   copy win is how a chevron prints twice as "»" and a hidden OTP radio comes
+   back. Search the whole file before adding a rule.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Form scaffolding used by nearly every page in the sequence ───────────── */
+.kcFormClass,
+.kcContentWrapperClass,
+.kcFormHeaderClass,
+.kcInfoAreaWrapperClass,
+.kcFormActionGroupClass,
+.kcFormButtonsClass,
+.kcFormButtonsWrapperClass,
+.kcFormOptionsWrapperClass,
+.kcPanelMainBodyClass {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* The submit row: base puts one or two buttons in here, and on app-initiated
+   actions a Cancel beside the primary. */
+.kcFormButtonsClass,
+.kcFormButtonsWrapperClass {
+    flex-direction: row;
+    gap: 8px;
+    /* Grow inside `.kcFormSettingClass`, which is a row holding the back-link
+       and the buttons side by side. Without this the container shrink-wrapped
+       its content, so a submit carrying kcButtonBlockClass — "full width" —
+       came out the width of its label. */
+    flex: 1 1 auto;
+}
+.kcFormButtonsClass > *,
+.kcFormButtonsWrapperClass > * { flex: 1 1 auto; }
+
+/* ⚠️ base wraps label-plus-asterisk and input-plus-error in the SAME class, so
+   the direction has to be decided by what is inside: a wrapper holding a label
+   is one line, a wrapper holding a control stacks its error underneath.
+
+   It has to key on the label, not on the asterisk, because
+   `user-profile-commons.ftl` writes the asterisk as a bare TEXT NODE
+   (`<#if attribute.required>*</#if>`) with no element around it — and CSS
+   cannot select a text node. Keying on `.required` instead left every register
+   and update-profile field with its asterisk wrapped onto its own line. */
+.kcInputWrapperClass,
+.kcLabelWrapperClass {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.kcInputWrapperClass:has(> label),
+.kcLabelWrapperClass:has(> label) {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+    /* Set here so the bare asterisk text node inherits it — that is the only
+       way to reach it. Without this it drew in body ink at 14px, while the
+       pages that wrap their asterisk in `.required` drew a small red one; same
+       mark, two looks. The label overrides both properties via .kcLabelClass. */
+    font: 600 12px/1 var(--p-font-head);
+    color: var(--p-alert-text);
+}
+/* ⚠️ The one exception: login-otp.ftl's device chooser is a flat run of
+   radio+label pairs inside one of these wrappers, and there each label IS a
+   full-width row. Left in the rule above it laid the devices out side by side
+   at a third of the card's width. */
+.kcInputWrapperClass:has(> label.kcLoginOTPListClass) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+/* base's own Bootstrap-era names, still emitted verbatim. */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.no-bottom-margin { margin-bottom: 0; }
+.form-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.form-vertical,
+.content-area,
+.col-md-10 { display: block; width: 100%; }
+.clearfix::after { content: ""; display: table; clear: both; }
+
+.control-label {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+/* The asterisk beside a required field's label. Error ink, as everywhere else
+   a form marks a field it will refuse to submit empty. */
+.required,
+.kcInputRequiredClass {
+    color: var(--p-alert-text);
+    font: 600 12px/1 var(--p-font-head);
+}
+
+/* "Fields marked with * are required" and the like. */
+.subtitle,
+.instruction,
+.delete-account-text,
+#kc-delete-text,
+#kc-terms-text,
+#kc-registration-terms-text,
+#kc-oauth,
+#kc-user-organizations {
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+
+/* Visually hidden but read aloud — base uses this for form legends. */
+.pf-screen-reader,
+.kcHtmlClass .pf-screen-reader {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Textarea (device code page) ──────────────────────────────────────────── */
+.kcTextareaClass {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 84px;
+    padding: 9px 11px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    color: var(--p-text);
+    font: 400 13px/1.6 var(--p-font-mono);
+    resize: vertical;
+}
+
+/* ── Checkboxes and radios in base's own wrappers ─────────────────────────── */
+.kcCheckboxInputClass,
+.kcCheckInputClass {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    flex: none;
+    accent-color: var(--p-accent);
+    cursor: pointer;
+}
+.kcCheckboxLabelRequiredClass { color: var(--p-alert-text); }
+.kcInputClassRadioCheckboxLabelDisabled {
+    color: var(--p-text-3);
+    cursor: not-allowed;
+}
+/* "Sign out of other sessions" — a checkbox row, not a field. */
+#logout-sessions,
+#kcRecoveryCodesConfirmationCheck + label,
+label[for="kcRecoveryCodesConfirmationCheck"],
+label[for="logout-sessions"] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 400 13px/1.4 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-2);
+}
+
+.kcInputHelperTextBeforeClass,
+.kcInputHelperTextAfterClass {
+    font: 400 12px/1.45 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-3);
+}
+
+/* ── Secondary buttons ───────────────────────────────────────────────────── */
+/* base's Cancel / "Back to application" buttons. A quiet neutral button —
+   the design has one quiet button style, not two. */
+.kcButtonDefaultClass {
+    background: var(--p-raised);
+    border-color: var(--p-border-mid);
+    color: var(--p-text);
+}
+.kcButtonDefaultClass:hover {
+    background: var(--p-border);
+    color: var(--p-text);
+}
+
+/* base renders a couple of links with PatternFly's link-button classes. */
+.pf-c-button.pf-m-link,
+.pf-m-inline {
+    height: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--p-accent-text);
+    font: 500 13px/1.5 var(--p-font-ui);
+    cursor: pointer;
+}
+.pf-c-button.pf-m-link:hover { color: var(--p-accent-hi); text-decoration: underline; }
+
+/* ── Alerts: base's Bootstrap-era markup ─────────────────────────────────── */
+/* Same shape as .kcAlertClass above, for the pages that emit .alert instead. */
+.alert,
+.pf-c-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border-mid);
+    border-inline-start: 3px solid var(--p-text-3);
+    border-radius: var(--p-radius);
+    font: 400 13px/1.5 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+.alert-warning,
+.pf-c-alert.pf-m-warning { border-inline-start-color: var(--p-warn); }
+.alert-error,
+.alert-danger,
+.pf-c-alert.pf-m-danger { border-inline-start-color: var(--p-alert); }
+.alert-success,
+.pf-c-alert.pf-m-success { border-inline-start-color: var(--p-online); }
+.alert-info,
+.pf-c-alert.pf-m-info { border-inline-start-color: var(--p-text-3); }
+.pf-c-alert__title,
+.pf-c-alert__description { margin: 0; color: var(--p-text-2); }
+.pf-c-alert__icon { flex: none; }
+#kc-error-message,
+.kcError {
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+
+/* ── Icon glyphs: PatternFly's icon font is not loaded ────────────────────── */
+/* Drawn as masks so they inherit currentColor, the same technique as the
+   password eye. Without these the recovery-code buttons were captionless
+   squares and the warning triangle was nothing at all. */
+/* ⚠️ The glyph goes on the `<i>`, never on its wrapper. select-authenticator.ftl
+   nests `div.kcSelectAuthListItemIconClass > i.<type> .kcSelectAuthListItemIconPropertyClass`
+   and login-otp.ftl nests `span.kcLoginOTPListItemIconBodyClass > i`, so masking
+   the wrapper too drew the icon twice, one inside the other. */
+.kcSelectAuthListItemIconClass,
+.kcLoginOTPListItemIconBodyClass {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    color: var(--p-text-3);
+}
+
+.pficon,
+.kcResetFlowIcon,
+.kcWebAuthnDefaultIcon,
+.kcWebAuthnKeyIcon,
+.kcAuthenticatorDefaultClass,
+.kcAuthenticatorOTPClass,
+.kcAuthenticatorPasswordClass,
+.kcAuthenticatorWebAuthnClass,
+.kcAuthenticatorWebAuthnPasswordlessClass,
+.kcAuthenticatorRecoveryAuthnCodesClass,
+.kcSelectAuthListItemIconPropertyClass,
+.kcLoginOTPListItemIconClass {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    /* A key: the generic "a credential" glyph. The four authenticator types
+       that a user actually chooses between get their own below — on the picker
+       page, three identical keys tell you nothing about what you are picking. */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7.5' cy='15.5' r='4.5'/%3E%3Cpath d='M11 12 20.5 2.5M17 3l4 4-2.5 2.5-4-4'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7.5' cy='15.5' r='4.5'/%3E%3Cpath d='M11 12 20.5 2.5M17 3l4 4-2.5 2.5-4-4'/%3E%3C/svg%3E");
+}
+/* A phone — the authenticator app, and the default for an OTP device row. */
+.kcAuthenticatorOTPClass,
+.kcLoginOTPListItemIconClass {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='2' width='12' height='20' rx='2'/%3E%3Cpath d='M11 18h2'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='2' width='12' height='20' rx='2'/%3E%3Cpath d='M11 18h2'/%3E%3C/svg%3E");
+}
+/* A padlock — password. */
+.kcAuthenticatorPasswordClass {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+}
+/* A numbered list — recovery codes. */
+.kcAuthenticatorRecoveryAuthnCodesClass {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6h11M9 12h11M9 18h11M4 5h1v3M4 12h2l-2 3h2M4 17h1.5a1 1 0 0 1 0 2H4'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6h11M9 12h11M9 18h11M4 5h1v3M4 12h2l-2 3h2M4 17h1.5a1 1 0 0 1 0 2H4'/%3E%3C/svg%3E");
+}
+/* A security key — WebAuthn / passkeys. */
+.kcWebAuthnDefaultIcon,
+.kcWebAuthnKeyIcon,
+.kcAuthenticatorWebAuthnClass,
+.kcAuthenticatorWebAuthnPasswordlessClass {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='8' width='14' height='8' rx='2'/%3E%3Cpath d='M16 10h4a2 2 0 0 1 0 4h-4M6 12h.01M9 12h.01'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='8' width='14' height='8' rx='2'/%3E%3Cpath d='M16 10h4a2 2 0 0 1 0 4h-4M6 12h.01M9 12h.01'/%3E%3C/svg%3E");
+}
+.pficon-warning-triangle-o {
+    color: var(--p-warn);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/%3E%3Cpath d='M12 9v4m0 4h.01'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/%3E%3Cpath d='M12 9v4m0 4h.01'/%3E%3C/svg%3E");
+}
+.pficon-print {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9V4h12v5M6 18h12v2H6z'/%3E%3Cpath d='M6 14h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9V4h12v5M6 18h12v2H6z'/%3E%3Cpath d='M6 14h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2z'/%3E%3C/svg%3E");
+}
+.pficon-save {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpath d='m7 10 5 5 5-5M12 15V3'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpath d='m7 10 5 5 5-5M12 15V3'/%3E%3C/svg%3E");
+}
+.pficon-blueprint {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2'/%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2'/%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E");
+}
+/* base puts the glyph in an <i> inside the button; the label follows it. */
+.kcButtonClass .pficon,
+.kcButtonClass .pficon-print,
+.kcButtonClass .pficon-save,
+.kcButtonClass .pficon-blueprint { margin-inline-end: 7px; }
+
+/* ── Authenticator picker ────────────────────────────────────────────────── */
+.kcSelectAuthListItemBodyClass,
+.kcSelectAuthListItemWrapperClass {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.kcSelectAuthListItemTitle {
+    font: 500 13px/1.3 var(--p-font-ui);
+    color: var(--p-text);
+}
+/* ⚠️ `.kcSelectAuthListItemArrowClass`, `.kcLoginOTPListItemIconBodyClass` and
+   `.kcLoginOTPListInputClass` are all styled in the authenticator sections
+   above, against the nesting the templates actually use. Do not declare them
+   here as well: being later in the file, such copies win — the chevron prints
+   twice and the OTP radio is un-hidden again. */
+
+/* ── Recovery codes ─────────────────────────────────────────────────────── */
+.kcRecoveryCodesList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+    gap: 6px 14px;
+    margin: 0;
+    padding: 12px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    font: 400 13px/1.7 var(--p-font-mono);
+    color: var(--p-text);
+    list-style-position: inside;
+}
+.kcRecoveryCodesActions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.kcRecoveryCodesActions > * { flex: 1 1 auto; }
+#kc-recovery-codes-list { margin: 0; }
+
+/* ── TOTP setup ─────────────────────────────────────────────────────────── */
+#kc-totp-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+    padding-inline-start: 20px;
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+#kc-totp-settings > li::marker { color: var(--p-accent); font-family: var(--p-font-head); }
+#kc-totp-settings p { margin: 0 0 6px; }
+#kc-totp-supported-apps {
+    margin: 0;
+    padding-inline-start: 18px;
+    color: var(--p-text-3);
+}
+/* Keycloak's QR is a black-on-white PNG, printed flush to the edge of the
+   image, and a scanner needs a light quiet zone around it — hence the padding.
+   ⚠️ The mount must be LIGHT. It takes --p-canvas, which is right for a light
+   cut; in a dark cut --p-canvas is dark and the quiet zone would vanish, so
+   point this at the lightest token in the palette instead. */
+#kc-totp-secret-qr-code {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    padding: 10px;
+    margin: 4px 0;
+    background: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+}
+#kc-totp-secret-key {
+    display: inline-block;
+    padding: 5px 8px;
+    background: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius);
+    font: 500 13px/1.4 var(--p-font-mono);
+    color: var(--p-text);
+    overflow-wrap: anywhere;
+    /* A secret meant to be copied by hand. */
+    user-select: all;
+}
+#kc-totp-type,
+#kc-totp-algorithm,
+#kc-totp-digits,
+#kc-totp-period,
+#kc-totp-counter {
+    font: 400 12px/1.6 var(--p-font-ui);
+    color: var(--p-text-3);
+}
+
+/* ── Identity-provider logos ────────────────────────────────────────────── */
+/* base emits `<i class="kcCommonLogoIdP ${p.iconClasses}">`, where iconClasses
+   is a FontAwesome name this theme has no font for. The provider's display
+   name is right next to it in .kc-social-icon-text, so the empty box is
+   removed rather than replaced with a wrong glyph. */
+.kcCommonLogoIdP { display: none; }
+.kcFormSocialAccountNameClass,
+.kc-social-icon-text {
+    font: 500 13px/1 var(--p-font-ui);
+    color: inherit;
+}
+.kcFormSocialAccountListItemClass { display: flex; }
+.kcFormSocialAccountListItemClass > * { flex: 1 1 auto; }
+.kcFormSocialAccountGridItem { min-width: 0; }
+.kcSignUpClass {
+    font: 400 11px/1.5 var(--p-font-ui);
+    color: var(--p-text-3);
+}
+
+/* ── Locale picker (base's dropdown markup) ──────────────────────────────── */
+/* This theme's own template renders a <select>; base's pages use a
+   details/dropdown list. Both are covered so the sequence stays consistent. */
+.kcLocaleMainClass,
+.kcLocaleWrapperClass,
+#kc-locale,
+#kc-locale-wrapper { display: flex; justify-content: flex-end; }
+.kcLocaleDropDownClass,
+.menu-button-links,
+#kc-current-locale-link {
+    font: 400 12px/1 var(--p-font-ui);
+    color: var(--p-text-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+/* The source design's own menu/popover: surface, medium radius, card shadow. */
+.kcLocaleListClass {
+    display: flex;
+    flex-direction: column;
+    margin: 4px 0 0;
+    padding: 5px;
+    background: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    border-radius: var(--p-radius-md);
+    box-shadow: var(--p-shadow);
+    list-style: none;
+}
+.kcLocaleListItemClass { display: block; }
+.kcLocaleItemClass {
+    display: block;
+    padding: 7px 10px;
+    border-radius: var(--p-radius);
+    color: var(--p-text-2);
+    font: 500 12px/1 var(--p-font-ui);
+    text-decoration: none;
+}
+.kcLocaleItemClass:hover { background: var(--p-border); color: var(--p-text); text-decoration: none; }
+.kcExpandedClass .kcLocaleListClass { display: flex; }
+
+/* ── Odds and ends ──────────────────────────────────────────────────────── */
+/* The reCAPTCHA widget renders in its own iframe and cannot be themed; this
+   only stops it overflowing the column. */
+.g-recaptcha { max-width: 100%; overflow-x: auto; }
+.kcFill { min-width: 0; }
+.kcCheckIconClass::before { content: "\2713"; color: var(--p-online); }
+.kcCopyIconClass::before { content: "\29C9"; }
+.kcFormControlUtilClass { display: flex; align-items: center; }
+.kcFormControlToggleIcon { color: var(--p-text-3); }
+#kc-content,
+#kc-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* ── Remaining base-template hooks ───────────────────────────────────────── */
+/* The options row on eleven pages in the sequence: a "Back to login" link
+   sitting under the form. Right-aligned, matching the login page's
+   Forgot-password link. */
+.kcFormOptionsClass {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    font: 400 13px/1.5 var(--p-font-ui);
+}
+.kcFormOptionsClass:empty { display: none; }
+
+/* frontchannel-logout.ftl styles its Continue link with Bootstrap names only,
+   so without these it renders as a bare text link on an otherwise themed page. */
+a.btn,
+.btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 18px;
+    border: 2px solid var(--p-border-mid);
+    border-radius: var(--p-radius);
+    background: var(--p-raised);
+    color: var(--p-text);
+    font: 600 13px/1 var(--p-font-head);
+    text-decoration: none;
+    cursor: pointer;
+}
+a.btn:hover,
+.btn:hover { background: var(--p-border); color: var(--p-text); text-decoration: none; }
+a.btn-primary,
+.btn-primary {
+    background: var(--p-accent-text);
+    border-color: transparent;
+    color: var(--p-ink);
+}
+a.btn-primary:hover,
+.btn-primary:hover { background: var(--p-accent-hi); color: var(--p-ink); }
+
+/* info.ftl and logout-confirm.ftl emit a bare `<div id="kc-info-message">` as
+   the page's body copy. This theme's own template ALSO uses that id, but there
+   it is an alert and already carries .kcAlertClass — hence the :not(), because
+   an id rule would otherwise outrank the alert styling and flatten the banner. */
+#kc-info-message:not(.kcAlertClass) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+#kc-info-message:not(.kcAlertClass) p { margin: 0; }
+
+/* code.ftl — the OAuth device flow's "here is your code" page. */
+#kc-code {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#kc-code #error {
+    margin: 0;
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-alert-text);
+}
+
+#kc-otp-reset-form-description {
+    margin: 0 0 4px;
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+
+/* ── Delete account ──────────────────────────────────────────────────────────
+   Reachable once the `delete_account` required action is enabled and a user
+   holds the account client's `delete-account` role. The console links here and
+   `delete-account-confirm.ftl` renders the confirmation.
+
+   That template needs three corrections, and all of them are scoped by
+   `form:has(.delete-account-text)` — `.delete-account-text` appears on exactly
+   one page in the whole sequence, so it identifies this form without touching
+   `select-organization.ftl`, which shares its `.form-vertical` class. */
+
+/* 1. The list of what deletion destroys. Two template shapes to cover, because
+      Keycloak rewrote this page:
+        ≤26.0.x  `<ul style="color: …">` — a hardcoded mid-grey inline colour
+                 that can fall under AA on a light card, on the one paragraph a
+                 user must not misread. `!important` is the only way past an
+                 inline style.
+        ≥26.6.x  `<ul class="kc-delete-account-list">` — the inline style is
+                 gone (upstream fixed it), so the attribute selector no longer
+                 matches and the class has to be named. */
+form:has(.delete-account-text) ul[style],
+form:has(.delete-account-text) .kc-delete-account-list {
+    color: var(--p-text-2) !important;
+    padding-inline-start: 20px;
+    font: 400 13px/1.6 var(--p-font-ui);
+}
+form:has(.delete-account-text) ul[style] li,
+form:has(.delete-account-text) .kc-delete-account-list li { margin-bottom: 4px; }
+
+/* 1b. 26.6+ moved the warning banner's spacing off an inline style and onto a
+       class. This layout spaces with flex gap, so it only needs the stray
+       margins neutralised. */
+form:has(.delete-account-text) .kc-alert-delete-account {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* 2. The confirm button is emitted with kcButtonPrimaryClass, so "Delete
+      account" arrives in exactly the same colour as "Sign in" — an
+      irreversible action wearing the affirmative colour. This is the one place
+      in the login sequence that qualifies as destructive.
+
+      ⚠️ The fill is --p-alert-TEXT, not --p-alert. A project's error token is
+      usually pitched for rules and badges, and behind --p-ink it typically
+      fails AA for a 13px button label — a Delete button shipped at 3.55:1 that
+      way. --p-alert-text is the same hue cleared to ≥4.5:1. */
+form:has(.delete-account-text) #kc-form-buttons input[type="submit"] {
+    background: var(--p-alert-text);
+    border-color: transparent;
+    color: var(--p-ink);
+}
+form:has(.delete-account-text) #kc-form-buttons input[type="submit"]:hover {
+    background: var(--p-alert-hi);
+    color: var(--p-ink);
+}
+
+/* 3. Cancel. On ≤26.0.x it is positioned with
+      `style="margin-left: calc(100% - 220px)"`, which pushes it off a 376px
+      column; on ≥26.6.x that is gone and it carries `.kc-delete-account-cancel`
+      instead. The row is flex either way, so all both need is the stray margin
+      neutralised and equal sizing. */
+form:has(.delete-account-text) #kc-form-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+form:has(.delete-account-text) #kc-form-buttons > *,
+form:has(.delete-account-text) .kc-delete-account-cancel {
+    margin-left: 0 !important;
+    flex: 1 1 auto;
+}
+
+/* The warning banner above it is `.alert.alert-warning` with a `.pficon`, both
+   already styled in the base-template section. */
+form:has(.delete-account-text) .delete-account-text {
+    font: 500 13px/1.55 var(--p-font-ui);
+    color: var(--p-text);
+}
+
+/* ── link-idp-action.ftl (new in 26.6) ───────────────────────────────────────
+   "You are about to link your account to <provider>" — a message block plus a
+   Continue/Cancel pair, in a `<form class="form-actions">` that this stylesheet
+   already lays out. Only the message itself needed a rule. */
+#kc-link-text {
+    font: 400 13px/1.55 var(--p-font-ui);
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+
+/* ── User-profile attribute groups ───────────────────────────────────────────
+   Custom attributes declared in Realm settings → User profile render
+   automatically on register, update-profile and idp-review-profile through
+   `user-profile-commons.ftl`, and everything they emit is already covered above:
+   text/select/textarea/checkbox controls, the required asterisk, per-field
+   validation errors, and kcInputHelperTextBefore/AfterClass.
+
+   Attribute GROUPS are the exception, for two reasons, and both are addressed by
+   the ids the template assigns rather than by class:
+
+   1. ⚠️ The header is emitted as `class="${kcFormGroupHeader!}"` — no
+      `properties.` prefix, so it is not a theme property at all and resolves to
+      the empty string. That is upstream's bug (present in 26.0.2), not
+      something a theme can declare its way out of; every group header arrives
+      classless.
+   2. The description reuses `kcLabelClass`, which in this theme is a 10px
+      uppercase tracked field label. Correct for "USERNAME", unreadable for a
+      sentence like "How you appear on the server." */
+label[id^="header-"] {
+    font: 600 15px/1.3 var(--p-font-ui);
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--p-text);
+    margin-top: 6px;
+}
+label[id^="description-"] {
+    font: 400 13px/1.55 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-2);
+    text-wrap: pretty;
+}
+
+/* ── Radio / checkbox option rows ────────────────────────────────────────────
+   One row per option, for user-profile attributes annotated
+   `inputType: select-radiobuttons` or `multiselect-checkboxes`. Reached from
+   register, update-profile, idp-review-profile and update-email.
+
+   ⚠️ The wrapper, input and label each get their own class, and all six arrive
+   via `<#assign classDiv=properties.kcInputClassRadio!>` rather than directly —
+   see theme.properties. Undeclared, these render `class=""`, so the options
+   stack as unstyled block elements with the box on its own line. */
+.kcInputClassRadio,
+.kcInputClassCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 22px;
+}
+.kcInputClassRadioInput,
+.kcInputClassCheckboxInput {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    flex: none;
+    accent-color: var(--p-accent);
+    cursor: pointer;
+}
+/* Sentence case in the body face, not the uppercase chrome of a field label —
+   these are values a user reads and picks between, not the name of the field. */
+.kcInputClassRadioLabel,
+.kcInputClassCheckboxLabel {
+    font: 400 13px/1.4 var(--p-font-ui);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--p-text-2);
+    cursor: pointer;
+}
+.kcInputClassRadioCheckboxLabelDisabled {
+    color: var(--p-text-3);
+    cursor: not-allowed;
+}
+
+/* ── Markers and wrappers that carry no paint ────────────────────────────────
+   Stated rather than left out, so the coverage audit stays at zero and the
+   reason is on the record.
+
+   `kcDarkModeClass` and `pf-v5-theme-dark` are what the shell stamps on <html>
+   and <body> when `x-kte-color-mode` is `dark` (or `system` and the OS is
+   dark). With the default `light` neither appears in the markup at all; they
+   stay declared as the hook for a dark cut. Neither should paint anything here
+   — `html.kcHtmlClass` and `body.kcBodyClass` already own those elements; a
+   dark cut re-declares the --p-* tokens under these classes instead. */
+.kcDarkModeClass,
+.pf-v5-theme-dark { /* marker only — see above */ }
+
+/* The language picker's wrapper inside the footer band. The <select> carries the
+   styling; this only needs to stop being a block. */
+.kc-footer-language {
+    display: flex;
+    align-items: center;
+}

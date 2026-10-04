@@ -1,0 +1,750 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   __BRAND__ account console — keycloak-theme skill STARTER
+   ───────────────────────────────────────────────────────────────────────────
+   This file is the keycloak-theme skill's starter, copied into the project and
+   then filled in. What to fill in:
+
+     1. The `--p-*` VALUES in `:root` — from the project's own design tokens.
+        The NAMES are shared with the login theme; keep them.
+     2. `--p-masthead` (and `--p-masthead-ink`) — the brand bar, and then
+        re-check the logo against it (see the masthead section).
+     3. The three @font-face files in ../fonts/ (`__FONT_UI_400__` etc.).
+     4. Radii (12px / 16px / 20px / 8px below) — to the project's own scale.
+
+   Every ⚠️ below was a shipped defect, measured on Keycloak 26.6.1. Keep the
+   rules even where the project's palette makes them look unnecessary — most of
+   them only show on SOME pages, SOME states or SOME visitors.
+   Background and procedure: references/account.md.
+
+   The same surface as the login theme — the project's palette, its UI face,
+   its corners — applied to Keycloak's account console, which is a PatternFly v5
+   React app rather than anything templated.
+
+   ── How this retints an app we do not own ──────────────────────────────────
+   PatternFly draws everything from `--pf-v5-global--*` custom properties: 3919
+   references in the console's stylesheet. So the retint is a token swap, not a
+   fight with component selectors. `:root` here maps every relevant global token
+   onto the project's palette, and this stylesheet is loaded after the console's
+   own (theme.properties `styles=`), so these win wherever both apply.
+
+   Being a LIGHT theme is what keeps this to one layer. A DARK cut of this file
+   also has to add `pf-v5-theme-dark` from a script, because PatternFly's
+   component-level dark rules do not read the globals at all. PatternFly's
+   DEFAULT cut is light, so there is no class to add and no second layer to keep
+   in step: the tokens do the whole job.
+
+   Only the ~70 tokens the console actually defines are overridden — the list
+   was read out of its stylesheet, not from memory. Re-read it after a major
+   Keycloak upgrade rather than adding tokens by guesswork.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ───────────────────────────────────────────────────────────────────
+   Self-hosted, the same three files as the login theme, copied into
+   ../fonts/ by the project's build. The console ships Red Hat Text/Display;
+   these replace it through the FontFamily tokens below. No external font CDN:
+   the console's CSP and the visitor's privacy both argue against it.
+
+   Add an italic face ONLY if the family ships one. A synthesised oblique of a
+   geometric sans reads as a rendering fault rather than as emphasis.
+   If the heading face (__FONT_HEAD__) differs from the UI face, add its own
+   @font-face blocks the same way. */
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/__FONT_UI_400__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 600; font-display: swap; src: url('../fonts/__FONT_UI_600__.woff2') format('woff2'); }
+@font-face { font-family: '__FONT_UI__'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/__FONT_UI_700__.woff2') format('woff2'); }
+
+/* ── Palette ─────────────────────────────────────────────────────────────────
+   The login theme's block, with ONE deliberate difference: the console's page
+   ground (--p-surface) is one step DARKER than the card (--p-canvas), so its
+   cards have something to sit on. The login theme puts a gradient or a plain
+   ground behind a single card; the console is a full app shell whose whole
+   layout is cards, and a card the same colour as the page behind it
+   disappears.
+
+   Kept as a copy rather than a shared file because a theme resource can only be
+   reached from inside its own theme type.
+
+   The values below are NEUTRAL STARTER DEFAULTS (slate + indigo), each already
+   AA-safe where the role needs it. Replace each with the project's own token
+   and re-measure: contrast is measured against the CARD (--p-canvas); the
+   values that also have to hold on the page ground (--p-surface) are noted
+   where they matter. Format: SOURCE (the project token it should come from) —
+   role, contrast budget. Starter ratios are given for the defaults shown. */
+:root {
+    --p-canvas:      #FFFFFF;   /* SOURCE: ?  — cards; the reference ground for every ratio below */
+    --p-surface:     #E2E8F0;   /* SOURCE: ?  — the PAGE ground, one step darker than --p-canvas  */
+    --p-raised:      #FFFFFF;   /* SOURCE: ?  — FIELDS; must track the app's input background     */
+    /* ⚠️ --p-raised is the FIELD ground and must track the project's own input
+       background — which in many palettes is the same colour as the card.
+       Fields are then defined by their border, not by their fill. Setting this
+       to a grey "subtle surface" instead (the shape most palettes have) can
+       invert the page: measured on 26.6.1, the three editable fields came out
+       grey while the read-only Username stayed card-white, so the one field the
+       user cannot type in was the one that looked writable.
+       --p-quiet is the read-only tone, and --p-sunken the quiet fill. */
+    --p-quiet:       #F1F5F9;   /* SOURCE: ?  — read-only fields; must differ from --p-raised, --p-text-3 ≥ 4.5:1 on it (6.92) */
+    --p-sunken:      #E2E8F0;   /* SOURCE: ?  — quiet fills, hover                                */
+    --p-border:      #CBD5E1;   /* SOURCE: ?  — hairline borders, decorative                      */
+    --p-border-mid:  #64748B;   /* SOURCE: ?  — field/control borders, ≥ 3:1 non-text (4.76 / 3.86) */
+    --p-line:        #E2E8F0;   /* SOURCE: ?  — hairlines between rows                            */
+    --p-text:        #0F172A;   /* SOURCE: ?  — body ink, ≥ 7:1 (17.85 / 14.48)                   */
+    --p-text-2:      #334155;   /* SOURCE: ?  — secondary ink, ≥ 7:1 (10.35 / 8.40)               */
+    --p-text-3:      #475569;   /* SOURCE: ?  — tertiary ink, ≥ 4.5:1 on card AND page (7.58 / 6.15) */
+    --p-text-faint:  #94A3B8;   /* SOURCE: ?  — decorative only, never text (2.56)                */
+    --p-accent:      #4338CA;   /* SOURCE: ?  — primary brand colour, ≥ 4.5:1 (7.90 / 6.41)       */
+    --p-accent-text: #4338CA;   /* SOURCE: ?  — links, primary fills; ≥ 4.5:1 both as ink and under --p-ink */
+    --p-accent-hi:   #312E81;   /* SOURCE: ?  — hover / pressed (11.42)                           */
+    --p-accent-soft: #E0E7FF;   /* SOURCE: ?  — quiet accent fills, decorative                    */
+    --p-ink:         #FFFFFF;   /* SOURCE: ?  — text ON the accent (7.90 on --p-accent)           */
+    /* Focus — see the note in the login theme; most apps declare none, so this
+       is usually a deliberate choice rather than a copied token. */
+    --p-focus:       #4338CA;   /* SOURCE: ?  — focus border, ≥ 3:1 non-text                      */
+    --p-focus-ring:  0 0 0 3px color-mix(in srgb, var(--p-focus) 25%, transparent);
+    /* Status. The fills are the project's tokens; the -text colours beside them
+       are usually DEVIATIONS, darkened on-hue until they clear 5:1 — an app's
+       own status values are typically pitched for a filled badge and fail as
+       ink. Record each deviation in the project's README. */
+    --p-online:      #16A34A;   /* SOURCE: ?  — success fills, icons, borders (3.30)              */
+    --p-online-text: #166534;   /* SOURCE: ?  — success INK, ≥ 5:1 on a pale green tint (7.13 / 6.71 on tint) */
+    --p-warn:        #F59E0B;   /* SOURCE: ?  — warning fills, icons, borders (2.15)              */
+    --p-warn-text:   #92400E;   /* SOURCE: ?  — warning INK, ≥ 5:1 on a pale gold tint (7.09 / 6.63 on tint) */
+    /* ⚠️ --p-alert is DECORATIVE ONLY when it is a bright red (most are): it
+       may not carry text and may not sit under --p-ink. See the longer note in
+       the login theme. --p-alert-text is ink AND fill, so it must clear 4.5:1
+       BOTH ways — as text on the card and behind --p-ink. */
+    --p-alert:       #EF4444;   /* SOURCE: ?  — error rules and borders only (3.76)               */
+    --p-alert-text:  #B91C1C;   /* SOURCE: ?  — error ink AND destructive fill, ≥ 4.5:1 both ways (6.47) */
+    --p-alert-hi:    #7F1D1D;   /* SOURCE: ?  — destructive :hover (10.02)                        */
+
+    /* The brand bar. Defaults to the accent, which is what most app headers
+       use. ⚠️ The logo has to CONTRAST with this — see the masthead section. */
+    --p-masthead:      var(--p-accent);   /* SOURCE: ?  — the app header's background             */
+    --p-masthead-ink:  var(--p-ink);      /* SOURCE: ?  — text/icons on the bar, ≥ 4.5:1 on it     */
+
+    --p-font-head:   '__FONT_HEAD__', '__FONT_UI__', sans-serif;  /* SOURCE: ?  — headings, labels */
+    --p-font-ui:     '__FONT_UI__', sans-serif;                   /* SOURCE: ?  — running UI text  */
+    --p-font-mono:   ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* ── PatternFly v5 globals → the project's palette ───────────────────── */
+    /* ⚠️ READ THIS BEFORE TOUCHING THE light-* / dark-* FAMILIES.
+       The suffix does not mean light/dark MODE, and it does not mean "a lighter
+       shade" either. It names the GROUND the value is meant for:
+
+         Color--dark-100        dark ink, to sit ON a light ground   (#151515)
+         Color--light-100       light ink, to sit ON a dark ground   (#ffffff)
+         BackgroundColor--dark-100   a DARK ground                   (#151515)
+         BackgroundColor--light-100  a LIGHT ground                  (#ffffff)
+
+       So the two Color families are INVERSES of each other, and mapping both to
+       dark ink — which is the intuitive reading of the names, and what the
+       theme this starter came from did until it was measured — silently breaks
+       every component that opts into the dark family.
+
+       That is not theoretical. `.pf-v5-c-chip` re-points
+       `--pf-v5-global--BackgroundColor--100` to `--light-100` inside its own
+       scope and takes its TEXT from `Color--dark-100`, while its background
+       falls to `Color--light-100`. With both Color families mapped to --p-text,
+       the domain chips on the account console's Organizations tab rendered
+       ink-on-ink — a solid black pill, contrast 1:1, measured on 26.6.1.
+       Nothing else on the page showed it, because nothing else uses a chip.
+
+       The same coupling governs tooltips and popovers: they pair
+       `BackgroundColor--dark-100` with `Color--light-100`, so those two must
+       stay a legible PAIR. Hence the dark grounds below are genuinely dark. */
+    --pf-v5-global--BackgroundColor--100: var(--p-surface);
+    --pf-v5-global--BackgroundColor--150: var(--p-surface);
+    --pf-v5-global--BackgroundColor--200: var(--p-canvas);
+    --pf-v5-global--BackgroundColor--300: var(--p-sunken);
+    --pf-v5-global--BackgroundColor--400: var(--p-border);
+    /* Light grounds — the app's surfaces. */
+    --pf-v5-global--BackgroundColor--light-100: var(--p-canvas);
+    --pf-v5-global--BackgroundColor--light-200: var(--p-canvas);
+    --pf-v5-global--BackgroundColor--light-300: var(--p-sunken);
+    /* Dark grounds — tooltips, popover headers, anything that expects to carry
+       light ink. --p-text is the darkest neutral the palette uses as ink, so a
+       tooltip is the project's own near-black rather than PatternFly's. */
+    --pf-v5-global--BackgroundColor--dark-100: var(--p-text);
+    --pf-v5-global--BackgroundColor--dark-200: var(--p-text-2);
+    --pf-v5-global--BackgroundColor--dark-300: var(--p-text-2);
+    --pf-v5-global--BackgroundColor--dark-400: var(--p-text-3);
+    /* Scrims behind modals: the dark ink, partly transparent. */
+    --pf-v5-global--BackgroundColor--dark-transparent-100: color-mix(in srgb, var(--p-text) 62%, transparent);
+    --pf-v5-global--BackgroundColor--dark-transparent-200: color-mix(in srgb, var(--p-text) 42%, transparent);
+
+    /* Text, on --p-canvas: see the budgets on --p-text / -2 / -3 above. */
+    --pf-v5-global--Color--100: var(--p-text);
+    --pf-v5-global--Color--200: var(--p-text-2);
+    --pf-v5-global--Color--300: var(--p-text-3);
+    --pf-v5-global--Color--400: var(--p-text-3);
+    /* Light INK — for the dark grounds above. Must clear 4.5:1 on --p-text. */
+    --pf-v5-global--Color--light-100: var(--p-ink);
+    --pf-v5-global--Color--light-200: var(--p-ink);
+    --pf-v5-global--Color--light-300: var(--p-ink);
+    /* Dark INK — for the light grounds above. */
+    --pf-v5-global--Color--dark-100: var(--p-text);
+    --pf-v5-global--Color--dark-200: var(--p-text-2);
+
+    /* ⚠️ Map by tone, not by number: stock --100 #d2d2d2, --200 #8a8d90 (MID),
+       --300 #f0f0f0 (LIGHTEST), --400 #aaabac — read from the 26.6.1 account-ui
+       stylesheet. The theme this starter came from had --200/--300 swapped, so
+       hairline separators drew in the strong field-border tone. */
+    --pf-v5-global--BorderColor--100: var(--p-border);
+    --pf-v5-global--BorderColor--200: var(--p-border-mid);
+    --pf-v5-global--BorderColor--300: var(--p-line);
+    --pf-v5-global--BorderColor--400: var(--p-border-mid);
+    --pf-v5-global--BorderColor--light-100: var(--p-border);
+    --pf-v5-global--BorderColor--dark-100: var(--p-border);
+
+    /* Actions. PatternFly puts these behind text as often as beside it, so they
+       take --p-accent-text, the step of the accent ramp that clears AA either
+       way. */
+    --pf-v5-global--primary-color--100: var(--p-accent-text);
+    --pf-v5-global--primary-color--200: var(--p-accent-hi);
+    --pf-v5-global--primary-color--300: var(--p-accent-text);
+    --pf-v5-global--primary-color--400: var(--p-accent-hi);
+    --pf-v5-global--primary-color--light-100: var(--p-accent-text);
+    --pf-v5-global--primary-color--dark-100: var(--p-accent-text);
+    --pf-v5-global--secondary-color--100: var(--p-text-2);
+    --pf-v5-global--active-color--100: var(--p-accent);
+    --pf-v5-global--active-color--200: var(--p-accent-hi);
+    --pf-v5-global--active-color--300: var(--p-border-mid);
+    --pf-v5-global--active-color--400: var(--p-text-3);
+
+    --pf-v5-global--link--Color: var(--p-accent-text);
+    --pf-v5-global--link--Color--hover: var(--p-accent-hi);
+    --pf-v5-global--link--Color--visited: var(--p-accent-text);
+    --pf-v5-global--link--Color--light: var(--p-accent-text);
+    --pf-v5-global--link--Color--light--hover: var(--p-accent-hi);
+    --pf-v5-global--link--Color--dark: var(--p-accent-text);
+    --pf-v5-global--link--Color--dark--hover: var(--p-accent-hi);
+
+    /* Status, off the project's semantic tokens (success / warning / error). */
+    /* ⚠️ Status tokens take the ACCESSIBLE step, not the app's raw token.
+       PatternFly spends these overwhelmingly as INK — label text, alert titles,
+       helper text, icons — on a pale tint of the same hue, which is the least
+       forgiving place a colour can land. An app's own values are usually
+       pitched for a filled badge and do not survive it. Measured examples from
+       the theme this starter came from:
+
+         a mid green  success token on the green label tint #f3faf2 → 2.73:1
+         a light orange warning token on the gold label tint #fdf7e7 → ~1.9:1
+
+       The first was measured on 26.6.1: the "Current session" label on Account
+       security → Device activity rendered at 2.73:1, 14px, carrying the only
+       words that say which device you are reading. Compare PatternFly's own
+       label inks — #7d1007 red, #3d2c00 gold — which are all deep on purpose.
+
+       ⚠️ WHICH SUFFIX IS THE INK: `--200`, not `--100`. PatternFly's own values
+       make the convention plain — success 100 #3e8635 / 200 #1e4f18, warning
+       100 #f0ab00 / 200 #795600 — so `--100` is the icon-and-border tone and
+       `--200` is the deep one components use for label text and alert titles.
+       Mapping the darkened deviation to `--100` therefore fixes nothing: the
+       green label kept reading its colour from `--200` and stayed at 2.73:1
+       until these were the way round they are now. Verified by re-measuring. */
+    --pf-v5-global--danger-color--100: var(--p-alert-text);
+    --pf-v5-global--danger-color--200: var(--p-alert-hi);
+    --pf-v5-global--danger-color--300: var(--p-alert-text);
+    --pf-v5-global--success-color--100: var(--p-online);
+    --pf-v5-global--success-color--200: var(--p-online-text);
+    --pf-v5-global--warning-color--100: var(--p-warn);
+    --pf-v5-global--warning-color--200: var(--p-warn-text);
+    --pf-v5-global--info-color--100: var(--p-text-2);
+    --pf-v5-global--info-color--200: var(--p-text-3);
+
+    --pf-v5-global--disabled-color--100: var(--p-text-3);
+    --pf-v5-global--disabled-color--200: var(--p-border);
+    --pf-v5-global--disabled-color--300: var(--p-border-mid);
+
+    --pf-v5-global--icon--Color--light: var(--p-text-2);
+    --pf-v5-global--icon--Color--dark: var(--p-text);
+    --pf-v5-global--icon--Color--light--light: var(--p-text-2);
+    --pf-v5-global--icon--Color--light--dark: var(--p-text-2);
+    --pf-v5-global--icon--Color--dark--light: var(--p-text);
+    --pf-v5-global--icon--Color--dark--dark: var(--p-text);
+
+    /* Many apps split these: one face for chrome and headings, another for
+       running copy. Map each to the project's own role, not to "the brand
+       font" wholesale. */
+    --pf-v5-global--FontFamily--text: var(--p-font-ui);
+    --pf-v5-global--FontFamily--text--vf: var(--p-font-ui);
+    --pf-v5-global--FontFamily--heading: var(--p-font-head);
+    --pf-v5-global--FontFamily--heading--vf: var(--p-font-head);
+    --pf-v5-global--FontFamily--monospace: var(--p-font-mono);
+    --pf-v5-global--FontFamily--monospace--vf: var(--p-font-mono);
+
+    /* The project's own shadow steps, tinted from its ink rather than
+       PatternFly's neutral grey, which reads as dirt on a tinted ground. */
+    --pf-v5-global--BoxShadow--sm: 0 0.2rem 0.5rem color-mix(in srgb, var(--p-text) 25%, transparent);
+    --pf-v5-global--BoxShadow--md: 0 4px 12px color-mix(in srgb, var(--p-text) 20%, transparent);
+
+    /* The project's small and medium radii. Most apps are a good deal rounder
+       than PatternFly's 3px/4px default. */
+    --pf-v5-global--BorderRadius--sm: 12px;
+    --pf-v5-global--BorderRadius--lg: 16px;
+
+    color-scheme: light;
+}
+
+/* ── The loading splash ─────────────────────────────────────────────────────
+   index.ftl carries its own inline <style> with a hardcoded white ground and a
+   prefers-color-scheme DARK variant. It is inline in <head> and this file is a
+   <link> after it, so these win — without them the console flashes dark on
+   every load for a visitor whose OS is in dark mode, then resolves to a light
+   page. */
+.keycloak__loading-container {
+    background-color: var(--p-surface) !important;
+    color: var(--p-text) !important;
+}
+#loading-text {
+    font-family: var(--p-font-head);
+    font-weight: 600;
+    color: var(--p-text-2);
+}
+
+html,
+body {
+    background: var(--p-surface);
+    color: var(--p-text);
+    font-family: var(--p-font-ui);
+}
+
+/* ── Masthead and the brand lock-up ──────────────────────────────────────── */
+/* The app's own header bar. --p-masthead defaults to the accent, which is what
+   most app headers are.
+
+   ⚠️ The logo cut has to CONTRAST with --p-masthead. They are one decision in
+   two files (this token and `logo` in theme.properties). The theme this
+   starter came from needed a DIFFERENT-COLOUR cut of its logo for the console:
+   the login theme's mark was a blue blob on a light card, and on the blue
+   masthead the blob's silhouette dissolved into the bar, leaving only the pale
+   lettering floating. A mark that reads on the login card very often does NOT
+   read on the masthead — check it at 1:1, not by eye at a glance, and re-check
+   whenever either side changes. */
+.pf-v5-c-masthead {
+    background-color: var(--p-masthead);
+    border-bottom: none;
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--p-text) 5%, transparent),
+                0 1px 4px color-mix(in srgb, var(--p-text) 10%, transparent);
+}
+
+/* `<a class="pf-v5-c-masthead__brand" href="{logoUrl}">` wrapping
+   `<img class="pf-v5-c-brand" src="{logo}">`.
+
+   Whether a wordmark is drawn beside the mark depends on the LOGO FILE:
+
+   - The logo is a full lock-up with the name drawn into it as vector paths →
+     NO wordmark. Adding one would print the name twice. This is the better
+     option where the artwork allows it: an <img> is a sandboxed context no
+     external font can reach, so lettering drawn as paths cannot fall back to
+     the wrong face.
+   - The logo is a bare mark with no lettering → enable the `::after` block
+     below. It sits inside the same anchor, so mark and name lead to the same
+     place, and it is typed in --p-font-head, which this stylesheet CAN reach.
+
+   ⚠️ If `logo` in theme.properties is ever changed between those two kinds,
+   this choice has to change with it. */
+.pf-v5-c-masthead__brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+/* Optional typed wordmark — enable ONLY when img/logo.svg has no lettering.
+.pf-v5-c-masthead__brand::after {
+    content: "__BRAND__";
+    margin-inline-start: 10px;
+    font: 700 18px/1 var(--p-font-head);
+    letter-spacing: 0.02em;
+    color: var(--p-masthead-ink);
+    white-space: nowrap;
+}
+*/
+.pf-v5-c-masthead__brand:focus-visible {
+    outline: 2px solid var(--p-masthead-ink);
+    outline-offset: 3px;
+    border-radius: 8px;
+}
+/* The masthead holds a `.pf-v5-c-toolbar`, and PatternFly gives that its OWN
+   `--BackgroundColor--100` — so the toolbar paints the page ground straight over
+   the brand bar and only the brand's own width keeps the bar colour. Measured: a
+   1090px page-ground block starting at x=283, which reads as a bar that failed
+   to fill. Scoped to the masthead, because the same component is a legitimate
+   opaque toolbar elsewhere on the page. */
+.pf-v5-c-masthead .pf-v5-c-toolbar,
+.pf-v5-c-masthead .pf-v5-c-toolbar__content,
+.pf-v5-c-masthead .pf-v5-c-toolbar__content-section,
+.pf-v5-c-masthead__content {
+    background-color: transparent;
+}
+
+/* The user menu, sitting on the brand bar. No border: an app header typically
+   boxes a call to action (a Login button) and nothing around the profile
+   control, which is just a name. A box here frames the name against the bar for
+   no reason.
+
+   The hover wash should be the treatment the app's own header controls get. */
+.pf-v5-c-masthead .pf-v5-c-menu-toggle {
+    background-color: transparent;
+    border: none;
+    border-radius: 12px;
+    color: var(--p-masthead-ink);
+}
+.pf-v5-c-masthead .pf-v5-c-menu-toggle:hover {
+    background-color: color-mix(in srgb, var(--p-masthead-ink) 15%, transparent);
+    color: var(--p-masthead-ink);
+}
+.pf-v5-c-masthead .pf-v5-c-menu-toggle__toggle-icon,
+.pf-v5-c-masthead .pf-v5-c-menu-toggle__text { color: inherit; }
+
+/* Sized by HEIGHT with the width left to follow, because a logo file is often a
+   lock-up in a non-square box — pinning both would squash it, and pinning the
+   width would make its height unpredictable in a bar with a fixed one.
+
+   38px suits a lock-up with the name knocked out of it: below about 32px that
+   lettering closes up. A bare, lettering-free mark wants about 26px.
+
+   Selected by STRUCTURE, not by the image's own class. The console builds this
+   img with CSS modules, so its class is a content hash — `_brand_1gmge_1` in
+   26.0.2 — which changes with every account-ui build. `.pf-v5-c-brand` is kept
+   beside it for the day the console switches to PatternFly's Brand component,
+   but it matches nothing today. */
+.pf-v5-c-masthead__brand > img,
+.pf-v5-c-brand,
+img.pf-v5-c-brand {
+    height: 38px;
+    width: auto;
+    max-height: none;
+    display: block;
+    flex: none;
+}
+
+/* ── Sidebar navigation ──────────────────────────────────────────────────── */
+.pf-v5-c-page__sidebar,
+.pf-v5-c-nav {
+    background-color: var(--p-canvas);
+}
+.pf-v5-c-page__sidebar {
+    border-right: 1px solid var(--p-border);
+}
+.pf-v5-c-nav__link {
+    font: 500 14px/1.4 var(--p-font-ui);
+    color: var(--p-text-2);
+}
+.pf-v5-c-nav__link:hover {
+    color: var(--p-text);
+    background-color: var(--p-raised);
+}
+/* Current page: a rule down the side in the project's accent. PatternFly's
+   default is its own blue. */
+.pf-v5-c-nav__item .pf-v5-c-nav__link.pf-m-current,
+.pf-v5-c-nav__link[aria-current="page"] {
+    color: var(--p-text);
+    background-color: var(--p-raised);
+}
+.pf-v5-c-nav__item .pf-v5-c-nav__link.pf-m-current::before,
+.pf-v5-c-nav__link[aria-current="page"]::before {
+    border-inline-start-color: var(--p-accent);
+}
+.pf-v5-c-nav__section-title {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+/* ── Page body, cards, headings ──────────────────────────────────────────── */
+.pf-v5-c-page__main,
+.pf-v5-c-page {
+    background-color: var(--p-surface);
+}
+/* The project's own card: its large radius, its border, its first shadow. */
+.pf-v5-c-card,
+.pf-v5-c-panel {
+    background-color: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    border-radius: 20px;
+    box-shadow: var(--pf-v5-global--BoxShadow--sm);
+}
+.pf-v5-c-title,
+h1, h2, h3 {
+    font-family: var(--p-font-head);
+    letter-spacing: normal;
+    color: var(--p-text);
+}
+.pf-v5-c-page__main-section {
+    background-color: transparent;
+}
+/* Mono for the things that are identifiers rather than prose: device IDs, IP
+   addresses, session timestamps, client ids. */
+.pf-v5-c-description-list__description,
+.pf-v5-c-clipboard-copy__text,
+code, kbd, samp {
+    font-family: var(--p-font-mono);
+}
+.pf-v5-c-description-list__term {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+/* ── Controls ────────────────────────────────────────────────────────────── */
+/* ⚠️ The WRAPPER owns the field's ground, and the inner control must not paint
+   one of its own.
+
+   PatternFly nests `<span class="pf-v5-c-form-control"><input></span>`, and the
+   input's padding box fills the wrapper's exactly — 1px inset on all four sides,
+   which is the border. Give that input an opaque background and `border-radius:
+   0`, as PatternFly does, and its square corners paint straight over the inside
+   of the wrapper's 12px curve: the field reads as a top and bottom rule with a
+   short tick at each end and the corners missing.
+
+   It is invisible on a control that happens to be transparent, which is why the
+   read-only Username field looked correct while the three editable fields
+   beside it did not. `border-radius: inherit` is belt and braces for any state
+   that paints a background anyway. Killing the pseudo-elements (below) does
+   nothing for this one — same symptom, different cause. */
+/* The project's own worked-out input: its field ground, a hairline border, its
+   small radius. */
+.pf-v5-c-form-control {
+    background-color: var(--p-raised);
+    color: var(--p-text);
+    font-family: var(--p-font-ui);
+    border: 1px solid var(--p-border);
+    border-radius: 12px;
+}
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select,
+.pf-v5-c-form-control > textarea {
+    background-color: transparent;
+    border-radius: inherit;
+    color: inherit;
+    font-family: var(--p-font-ui);
+}
+/* ⚠️ PatternFly does NOT draw a form control's border on the element. It draws
+   it on two absolutely-positioned pseudo-elements at `inset: 0`:
+
+     ::before   1px on three sides, `border-radius: 0`
+     ::after    the focus underline, 1-2px on the bottom
+
+   Both are SQUARE, so on a 12px-rounded control they sit over the real border
+   with their corners poking past it — measured as a doubled edge down each side
+   and a stray vertical tick at the right-hand corners. They also disagree with
+   each other per state: a `pf-m-disabled` control drops the ::before entirely,
+   which is why the read-only Username field looked like a different component
+   from the four editable fields beside it.
+
+   Neutralising `::after`'s bottom border alone is not enough — that was the
+   first attempt, and it left ::before's square three-sided box in place.
+
+   Both carry nothing but those borders (`content: ""`, no background), so both
+   are removed outright and the element's own rounded border is the only one, as
+   it is on the project's own inputs.
+
+   `.pf-v5-c-menu-toggle` is built the same way and gets the same treatment —
+   it is the "Select a locale" control on Personal info, and the user menu up in
+   the masthead. */
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after,
+.pf-v5-c-menu-toggle::before,
+.pf-v5-c-menu-toggle::after {
+    display: none;
+}
+
+/* A menu toggle outside the masthead is a form control in everything but name,
+   so it wears the same border, radius and focus ring as one. */
+.pf-v5-c-menu-toggle {
+    border: 1px solid var(--p-border);
+    border-radius: 12px;
+    background-color: var(--p-raised);
+    color: var(--p-text);
+}
+/* Its focus state is declared once, with the form control's, further down. */
+/* Icon-only toggles — the kebab menus in tables — carry no box at all. */
+.pf-v5-c-menu-toggle.pf-m-plain {
+    border: none;
+    background-color: transparent;
+}
+
+/* PatternFly marks focus with a thick bottom border in its own blue; this theme
+   uses the project's focus ring, on the element, so it follows the same
+   corners. The inner <input> keeps `outline: none` — the wrapper carries the
+   state. */
+.pf-v5-c-form-control:focus-within,
+.pf-v5-c-menu-toggle:focus-visible,
+.pf-v5-c-menu-toggle.pf-m-expanded {
+    border-color: var(--p-focus);
+    box-shadow: var(--p-focus-ring);
+    outline: none;
+}
+.pf-v5-c-form-control > input:focus,
+.pf-v5-c-form-control > textarea:focus,
+.pf-v5-c-form-control > select:focus { outline: none; }
+
+/* ⚠️ The validation states have to move to the element too.
+   PatternFly draws `pf-m-warning` / `pf-m-success` / `pf-m-error` on the same
+   `::after` that has just been removed, so with the pseudo-elements gone they
+   would render as nothing at all. They were also the source of a surprise: the
+   account console marks a REQUIRED-BUT-EMPTY field `pf-m-warning`, which drew a
+   2px warning-colour underline — an orange ring around Last Name on a page with
+   no orange anywhere else. On the element, in the same tokens, it reads as a
+   state rather than as a stray colour. */
+.pf-v5-c-form-control.pf-m-warning { border-color: var(--p-warn); }
+.pf-v5-c-form-control.pf-m-success { border-color: var(--p-online); }
+.pf-v5-c-form-control.pf-m-error   { border-color: var(--p-alert); }
+/* Focus always wins over a validation tint: it is the field you are in. */
+.pf-v5-c-form-control.pf-m-warning:focus-within,
+.pf-v5-c-form-control.pf-m-success:focus-within,
+.pf-v5-c-form-control.pf-m-error:focus-within { border-color: var(--p-focus); }
+
+/* Read-only, e.g. Username when `isEditUserNameAllowed` is false.
+   ⚠️ NOT var(--p-canvas): when the card, the field and the canvas are all the
+   same colour (common — see --p-raised), the canvas tone leaves a read-only
+   field pixel-identical to an editable one and only the cursor says otherwise.
+   --p-quiet is a step down the neutral ramp; --p-text-3 must clear 4.5:1 on
+   it. */
+.pf-v5-c-form-control.pf-m-disabled,
+.pf-v5-c-form-control.pf-m-readonly {
+    background-color: var(--p-quiet);
+    color: var(--p-text-3);
+}
+.pf-v5-c-form-control.pf-m-disabled > input,
+.pf-v5-c-form-control.pf-m-readonly > input {
+    background-color: transparent;
+    color: inherit;
+}
+.pf-v5-c-form__label-text {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+/* The project's own button: its small radius, its UI face at its bold weight. */
+.pf-v5-c-button {
+    border-radius: 12px;
+    font: 600 13px/1 var(--p-font-head);
+}
+.pf-v5-c-button.pf-m-primary {
+    background-color: var(--p-accent-text);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-primary:hover {
+    background-color: var(--p-accent-hi);
+    color: var(--p-ink);
+}
+/* The project's outline button. */
+.pf-v5-c-button.pf-m-secondary {
+    background-color: transparent;
+    border: 2px solid var(--p-accent-text);
+    color: var(--p-accent-text);
+}
+.pf-v5-c-button.pf-m-secondary:hover {
+    background-color: var(--p-raised);
+    border-color: var(--p-accent-hi);
+    color: var(--p-accent-hi);
+}
+/* Delete account, and anything else destructive — the project's danger button,
+   filled rather than outlined because the console uses these as the confirming
+   action in a dialog. */
+.pf-v5-c-button.pf-m-danger {
+    /* ⚠️ --p-alert-TEXT, not --p-alert: measured on 26.6.1, the Delete button
+       under Personal info → Delete account came out near-white on the bright
+       error red, 3.55:1 at 13px, failing AA — on the one control in the
+       console that destroys data irreversibly. */
+    background-color: var(--p-alert-text);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-danger:hover {
+    background-color: var(--p-alert-hi);
+    color: var(--p-ink);
+}
+.pf-v5-c-button.pf-m-link {
+    color: var(--p-accent-text);
+}
+.pf-v5-c-button.pf-m-link:hover {
+    color: var(--p-accent-hi);
+}
+.pf-v5-c-button:focus-visible {
+    outline: 2px solid var(--p-accent);
+    outline-offset: 2px;
+}
+
+/* ── Feedback ────────────────────────────────────────────────────────────── */
+.pf-v5-c-alert {
+    background-color: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: 12px;
+    color: var(--p-text-2);
+}
+.pf-v5-c-alert__title { color: var(--p-text); }
+.pf-v5-c-alert.pf-m-success { border-inline-start: 3px solid var(--p-online); }
+.pf-v5-c-alert.pf-m-warning { border-inline-start: 3px solid var(--p-warn); }
+.pf-v5-c-alert.pf-m-danger  { border-inline-start: 3px solid var(--p-alert); }
+.pf-v5-c-alert.pf-m-info    { border-inline-start: 3px solid var(--p-text-3); }
+
+.pf-v5-c-label {
+    background-color: var(--p-raised);
+    border: 1px solid var(--p-border);
+    border-radius: 8px;
+    color: var(--p-text-2);
+    font-family: var(--p-font-ui);
+}
+
+/* The project's own dropdown / profile menu: surface, medium radius, first
+   shadow. */
+.pf-v5-c-menu,
+.pf-v5-c-dropdown__menu,
+.pf-v5-c-select__menu {
+    background-color: var(--p-canvas);
+    border: 1px solid var(--p-border);
+    border-radius: 16px;
+    box-shadow: var(--pf-v5-global--BoxShadow--sm);
+}
+.pf-v5-c-menu__item:hover {
+    background-color: var(--p-border);
+    color: var(--p-text);
+}
+
+.pf-v5-c-data-list,
+.pf-v5-c-table {
+    background-color: transparent;
+    color: var(--p-text-2);
+}
+.pf-v5-c-data-list__item {
+    border-bottom: 1px solid var(--p-line);
+    background-color: transparent;
+}
+.pf-v5-c-table thead th {
+    font: 600 10px/1 var(--p-font-head);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--p-text-3);
+}
+
+/* The masthead avatar is removed, not restyled.
+   It is a bare `<svg class="pf-v5-c-avatar">` in a toolbar item of its own —
+   measured: inside no `<button>` and no `<a>`, with no handler. It does nothing.
+   The control beside it, `<username> ▾`, is the actual user menu.
+
+   An earlier pass of the source theme painted it as the app header's avatar
+   button (an accent disc with an inverse ring). That was worse than leaving it
+   alone: it made a dead element look like the one thing in the app's own
+   header you are meant to click. The app has ONE control in the bar that opens
+   your menu; so does this now. */
+.pf-v5-c-masthead .pf-v5-c-avatar { display: none; }
+
+.pf-v5-c-spinner {
+    --pf-v5-c-spinner--Color: var(--p-accent);
+}
+
+/* Chips (Organizations → domains, and anywhere else PatternFly uses one) are
+   coloured entirely by the light-* / dark-* mapping in :root — see the ⚠️
+   there. No rule here on purpose: if a chip ever renders as a solid pill, fix
+   the family mapping, not the chip. */
+
+/* Keyboard focus everywhere PatternFly does not already draw one. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--p-accent);
+    outline-offset: 2px;
+}

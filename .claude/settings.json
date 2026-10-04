@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(/.claude/skills/keycloak-theme/**)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/smoke/src/theme/Smoke/account/resources/css/**)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/smoke/src/theme/Smoke/account/**)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/smoke/src/theme/Smoke/account/resources/**)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/**)",
+      "Bash(node -e 'const s=require\\(\"fs\"\\).readFileSync\\(\"render/RE-AdminUserDetails.html\",\"utf8\"\\);for\\(const k of [\"readonly\",\"<select\",\"Save</\",\"Revert\",\"Enabled<\",\"Action\",\"breadcrumb\",\"Users</a>\"]\\){const i=s.indexOf\\(k\\);console.log\\(\"=== \"+k+\"\\\\n\"+s.slice\\(Math.max\\(0,i-500\\),i+300\\).replace\\(/<path[^>]*>/g,\"\"\\)\\)}')",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/design/**)",
+      "Bash(node -e ' *)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/**)",
+      "Bash(sed -n '11,238p' template.ftl)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/**)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/UcllRe/admin/resources/**)",
+      "Bash(sed -n '112,$p' admin.css)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/work/**)",
+      "Bash(cd /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/kc/theme/keycloak.v2/admin/resources/assets; grep -oh -- '--pf-v5-c-tabs[A-Za-z0-9_-]*:[^;}]*' main-*.css Tabs-*.css | sort -u | grep -i \"color\\\\|border\\\\|m-box\" | head -70)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/kc/theme/keycloak.v2/admin/resources/**)",
+      "Bash(node /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/edit2.js /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/login/resources/css/styles.css)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/login/resources/css/**)",
+      "Read(//c/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/UcllRe/login/messages/**)",
+      "Bash(node -e \"const fs=require\\('fs'\\);let t=fs.readFileSync\\('messages_nl.properties','utf8'\\);t=t.replace\\(/^kteTagline=.*$/m,'kteTagline=IDEE'+String.fromCharCode\\(92\\)+'u00CBN. INNOVATIE. IMPACT.'\\);fs.writeFileSync\\('messages_nl.properties',t\\)\")",
+      "Bash(cat)",
+      "Bash(chmod +x /c/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/sync-master.sh)",
+      "Bash(/c/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/sync-master.sh)",
+      "Read(//c/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/**)",
+      "Bash(timeout 290 bash C:/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/shoot.sh AuthenticatorKoppelen Verificatiecode NieuwWachtwoord ProfielAanvullen EmailBevestigen Toestemming Uitloggen)",
+      "Bash(sed -i 's|^sel MainEN|sel Gelukt \\\\&\\\\& run --login tester:test --shot \"$\\(auth\\)\" $SH/tmp-acc.png --shot \"$K/ucll-flows/protocol/openid-connect/logout?kc_locale=nl\" $SH/ucll-Gelukt.png --click \"#kc-logout\"\\\\nsel SessieVerlopen \\\\&\\\\& run --shot \"$\\(auth\\)\" $SH/tmp-login.png --shot \"$K/ucll-flows/login-actions/authenticate?client_id=theme-preview\\\\&execution=x\\\\&tab_id=x\\\\&kc_locale=nl\" $SH/ucll-SessieVerlopen.png\\\\nsel MainEN|' C:/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/shoot.sh)",
+      "Bash(timeout 280 bash C:/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/shoot.sh Verificatiecode Toestemming Fout Gelukt SessieVerlopen)",
+      "Bash(cygpath -w /c/Users/kenla/AppData/Local/Temp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/shots)",
+      "Bash(node /d/Github/claude-skills/.claude/skills/keycloak-theme/scripts/screenshot.mjs --light --width 1440 --height 960 --wait 3000 --login tester:test --shot __TRACKED_VAR__/?kc_locale=nl __CMDSUB_OUTPUT__/ucllre-account-personal.png --shot __TRACKED_VAR__/account-security/device-activity __CMDSUB_OUTPUT__/ucllre-account-devices.png --shot __TRACKED_VAR__/account-security/signing-in __CMDSUB_OUTPUT__/ucllre-account-signingin.png)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/**)",
+      "Bash(curl -s http://localhost:8088/realms/ucll-flows/account/)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/UcllReMaster/admin/resources/**)",
+      "Bash(cd /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/email; sed -n 1,11p html/template.ftl; sed -n 19,36p html/template.ftl)"
+    ]
+  }
+}

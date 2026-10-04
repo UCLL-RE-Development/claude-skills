@@ -1,0 +1,21 @@
+# Text files are stored with LF in the repository and checked out with LF.
+# Shell scripts with CRLF fail on Linux (the Keycloak containers, CI) with
+# "\r: command not found"; FreeMarker templates, properties and CSS ship inside
+# theme jars that run on Linux too.
+* text=auto eol=lf
+
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+*.jar   binary
+*.zip   binary
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary

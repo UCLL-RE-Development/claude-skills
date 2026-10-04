@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!-- Static render harness for the LOGIN theme — not part of the theme itself.
+
+     Each block below is the DOM a base/login/*.ftl actually emits, with its
+     class names already expanded through theme.properties, wired to the real
+     stylesheet at ../../src/theme/... (no copy). It exists because most of the
+     login sequence needs a live authentication flow to reach — OTP entry, TOTP
+     setup, update password, recovery codes, the authenticator picker — so those
+     pages cannot be eyeballed without signing in.
+
+     tools/audit-coverage.mjs proves every hook HAS a rule. This shows what the
+     rules compose into, which is a different question: it is what caught the
+     submit button that ignored kcButtonBlockClass, the OTP device rows squeezed
+     to a third width, a chevron printed twice as "»", and nested duplicate
+     icons. None of those are visible to the audit.
+
+     Serve the theme project's root over HTTP (e.g. `npx serve .` or
+     `python -m http.server`) and open /tools/harness/ — file:// works in most
+     browsers too, but a server matches how fonts and images actually load.
+     Check it at phone width as well as desktop.
+
+     Keep the markup in step with the templates it mirrors: when a base template
+     changes shape, this file is a mirror, not a source of truth. Re-derive a
+     block from the running Keycloak's base/login/*.ftl at the version production
+     runs (dev/keycloak-compose.yaml pins it) rather than editing it by guess.
+     The brand <header> mirrors our own login/template.ftl — when that changes
+     (an extra wordmark, intrinsic width/height on the mark), change every copy
+     here to match. -->
+<html class="kcHtmlClass" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>theme harness</title>
+<link href="../../src/theme/__THEME__/login/resources/css/styles.css" rel="stylesheet">
+<style>
+  /* harness chrome only */
+  .hx { padding: 30px 0 8px; text-align: center; font: 600 10px/1 system-ui, sans-serif;
+        letter-spacing: .18em; text-transform: uppercase; color: #5B6573; }
+  /* Each section is its own .kcLogin wrapper, so the page ground's gradient
+     would repeat per section and band. Flattened here — this is a bench for
+     the cards, not a render of the page. */
+  .kcLogin { min-height: auto; padding: 8px clamp(18px,5%,32px) 34px; align-items: flex-start;
+             background: var(--p-surface); }
+</style>
+</head>
+<body id="keycloak-bg" class="kcBodyClass">
+
+<!-- ══ login-update-password.ftl ══════════════════════════════════════════ -->
+<p class="hx">login-update-password.ftl</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass">
+      <img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" />
+    </div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">Update password</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <form id="kc-passwd-update-form" class="kcFormClass" action="#" method="post">
+      <div class="kcFormGroupClass">
+        <div class="kcLabelWrapperClass"><label for="password-new" class="kcLabelClass">New Password</label> <span class="required">*</span></div>
+        <div class="kcInputWrapperClass">
+          <div class="kcInputGroup">
+            <div class="kcInputGroupItemClass kcFill"><input type="password" id="password-new" class="kcInputClass" value="hunter22"></div>
+            <div class="kcInputGroupItemClass"><button class="kcFormPasswordVisibilityButtonClass" type="button" aria-label="Show password" data-password-toggle><i class="kcFormPasswordVisibilityIconShow" aria-hidden="true"></i></button></div>
+          </div>
+        </div>
+      </div>
+      <div class="kcFormGroupClass">
+        <div class="kcLabelWrapperClass"><label for="password-confirm" class="kcLabelClass">Confirm password</label> <span class="required">*</span></div>
+        <div class="kcInputWrapperClass">
+          <div class="kcInputGroup">
+            <div class="kcInputGroupItemClass kcFill"><input type="password" id="password-confirm" class="kcInputClass" aria-invalid="true"></div>
+            <div class="kcInputGroupItemClass"><button class="kcFormPasswordVisibilityButtonClass" type="button" aria-label="Show password" data-password-toggle><i class="kcFormPasswordVisibilityIconShow" aria-hidden="true"></i></button></div>
+          </div>
+          <span id="input-error-password-confirm" class="kcInputErrorMessageClass" aria-live="polite">Passwords don't match.</span>
+        </div>
+      </div>
+      <div class="kcFormGroupClass">
+        <div class="kcInputWrapperClass">
+          <div class="checkbox"><label for="logout-sessions"><input type="checkbox" id="logout-sessions" name="logout-sessions" value="on" checked> Sign out from other devices</label></div>
+        </div>
+      </div>
+      <div class="kcFormGroupClass kcFormSettingClass">
+        <div id="kc-form-options" class="kcFormOptionsClass"></div>
+        <div id="kc-form-buttons" class="kcFormButtonsClass">
+          <input class="kcButtonClass kcButtonPrimaryClass kcButtonBlockClass kcButtonLargeClass" type="submit" value="Submit">
+        </div>
+      </div>
+    </form>
+  </div>
+</main></div></div>
+
+<!-- ══ login-otp.ftl ══════════════════════════════════════════════════════ -->
+<p class="hx">login-otp.ftl — two configured devices</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass"><img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" /></div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">Sign in to your account</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <div data-kc-class="kcAlertClass" class="kcAlertClass pf-m-danger">
+      <div class="kcAlertIconClass"><span class="kcFeedbackErrorIcon"></span></div>
+      <span class="kcAlertTitleClass kc-feedback-text">Invalid authenticator code.</span>
+    </div>
+    <form id="kc-otp-login-form" class="kcFormClass" action="#" method="post">
+      <div class="kcFormGroupClass">
+        <div class="kcInputWrapperClass">
+          <input id="kc-otp-credential-0" class="kcLoginOTPListInputClass" type="radio" name="selectedCredentialId" value="1" checked="checked">
+          <label for="kc-otp-credential-0" class="kcLoginOTPListClass" tabindex="0">
+            <span class="kcLoginOTPListItemHeaderClass">
+              <span class="kcLoginOTPListItemIconBodyClass"><i class="kcLoginOTPListItemIconClass" aria-hidden="true"></i></span>
+              <span class="kcLoginOTPListItemTitleClass">Phone</span>
+            </span>
+          </label>
+          <input id="kc-otp-credential-1" class="kcLoginOTPListInputClass" type="radio" name="selectedCredentialId" value="2">
+          <label for="kc-otp-credential-1" class="kcLoginOTPListClass" tabindex="1">
+            <span class="kcLoginOTPListItemHeaderClass">
+              <span class="kcLoginOTPListItemIconBodyClass"><i class="kcLoginOTPListItemIconClass" aria-hidden="true"></i></span>
+              <span class="kcLoginOTPListItemTitleClass">Yubikey</span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="kcFormGroupClass">
+        <div class="kcLabelWrapperClass"><label for="otp" class="kcLabelClass">One-time code</label></div>
+        <div class="kcInputWrapperClass">
+          <input id="otp" name="otp" autocomplete="off" type="text" class="kcInputClass" inputmode="numeric" value="184 302">
+        </div>
+      </div>
+      <div class="kcFormGroupClass kcFormSettingClass">
+        <div id="kc-form-options" class="kcFormOptionsClass"><div class="kcFormOptionsWrapperClass"><span><a href="#">Back to Login</a></span></div></div>
+        <div id="kc-form-buttons" class="kcFormButtonsClass"><input class="kcButtonClass kcButtonPrimaryClass kcButtonBlockClass kcButtonLargeClass" type="submit" value="Sign In"></div>
+      </div>
+    </form>
+  </div>
+</main></div></div>
+
+<!-- ══ login-config-totp.ftl ══════════════════════════════════════════════ -->
+<p class="hx">login-config-totp.ftl</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass"><img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" /></div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">Mobile authenticator setup</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <ol id="kc-totp-settings">
+      <li>
+        <p>Install one of the following applications on your mobile:</p>
+        <ul id="kc-totp-supported-apps"><li>FreeOTP</li><li>Google Authenticator</li><li>Microsoft Authenticator</li></ul>
+      </li>
+      <li>
+        <p>Open the application and scan the barcode:</p>
+        <img id="kc-totp-secret-qr-code" alt="Figure: Barcode" width="150" height="150"
+             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Crect width='150' height='150' fill='white'/%3E%3Cg fill='black'%3E%3Crect x='10' y='10' width='34' height='34'/%3E%3Crect x='106' y='10' width='34' height='34'/%3E%3Crect x='10' y='106' width='34' height='34'/%3E%3Crect x='60' y='60' width='12' height='12'/%3E%3Crect x='84' y='60' width='12' height='12'/%3E%3Crect x='60' y='84' width='12' height='12'/%3E%3Crect x='96' y='96' width='12' height='12'/%3E%3Crect x='120' y='72' width='12' height='12'/%3E%3C/g%3E%3Cg fill='white'%3E%3Crect x='20' y='20' width='14' height='14'/%3E%3Crect x='116' y='20' width='14' height='14'/%3E%3Crect x='20' y='116' width='14' height='14'/%3E%3C/g%3E%3C/svg%3E">
+        <p><a href="#" id="mode-manual">Unable to scan?</a></p>
+      </li>
+      <li>
+        <p>Enter the one-time code provided by the application and click Submit to finish the setup.</p>
+        <p><span id="kc-totp-secret-key">KVKF GYTM N5CU 2VKJ IZDE GRSN</span></p>
+        <ul><li id="kc-totp-type">Type: Time-based</li><li id="kc-totp-algorithm">Algorithm: SHA1</li><li id="kc-totp-digits">Digits: 6</li><li id="kc-totp-period">Interval: 30</li></ul>
+      </li>
+    </ol>
+    <form action="#" class="kcFormClass" id="kc-totp-settings-form" method="post">
+      <div class="kcFormGroupClass">
+        <div class="kcInputWrapperClass"><label for="totp" class="control-label">One-time code</label> <span class="required">*</span></div>
+        <div class="kcInputWrapperClass"><input type="text" id="totp" name="totp" autocomplete="off" class="kcInputClass" dir="ltr"></div>
+      </div>
+      <div class="kcFormGroupClass">
+        <div class="kcInputWrapperClass"><label for="userLabel" class="control-label">Device Nickname</label></div>
+        <div class="kcInputWrapperClass"><input type="text" class="kcInputClass" id="userLabel" name="userLabel" autocomplete="off" dir="ltr"></div>
+      </div>
+      <input type="submit" class="kcButtonClass kcButtonPrimaryClass kcButtonBlockClass kcButtonLargeClass" id="saveTOTPBtn" value="Submit">
+      <button type="submit" class="kcButtonClass kcButtonDefaultClass kcButtonLargeClass" id="cancelTOTPBtn">Cancel</button>
+    </form>
+  </div>
+</main></div></div>
+
+<!-- ══ login-recovery-authn-code-config.ftl ═══════════════════════════════ -->
+<p class="hx">login-recovery-authn-code-config.ftl</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass"><img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" /></div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">Recovery authentication codes</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <div class="kcRecoveryCodesWarning">
+      <div class="kcAlertClass pf-m-warning">
+        <div class="kcAlertIconClass"><i class="pficon pficon-warning-triangle-o" aria-hidden="true"></i></div>
+        <span class="kcAlertTitleClass">You will not be able to see these codes again after this page is closed.</span>
+      </div>
+    </div>
+    <ol class="kcRecoveryCodesList" id="kc-recovery-codes-list">
+      <li><span>4a9b-2c1f</span></li><li><span>7e3d-88ac</span></li><li><span>10bb-5f42</span></li>
+      <li><span>c2d0-9a37</span></li><li><span>6f18-40be</span></li><li><span>b571-e2c8</span></li>
+    </ol>
+    <div class="kcRecoveryCodesActions">
+      <button id="printRecoveryCodes" class="kcButtonClass kcButtonDefaultClass" type="button"><i class="pficon pficon-print" aria-hidden="true"></i>Print</button>
+      <button id="downloadRecoveryCodes" class="kcButtonClass kcButtonDefaultClass" type="button"><i class="pficon pficon-save" aria-hidden="true"></i>Download</button>
+      <button id="copyRecoveryCodes" class="kcButtonClass kcButtonDefaultClass" type="button"><i class="pficon pficon-blueprint" aria-hidden="true"></i>Copy</button>
+    </div>
+    <form action="#" class="kcFormClass" id="kc-recovery-codes-settings-form" method="post">
+      <div class="kcFormOptionsClass"></div>
+      <div class="checkbox"><label for="kcRecoveryCodesConfirmationCheck"><input class="kcCheckInputClass" type="checkbox" id="kcRecoveryCodesConfirmationCheck"> I have saved these codes somewhere safe</label></div>
+      <input type="submit" class="kcButtonClass kcButtonPrimaryClass kcButtonBlockClass kcButtonLargeClass" id="saveRecoveryAuthnCodesBtn" value="Confirm">
+    </form>
+  </div>
+</main></div></div>
+
+<!-- ══ select-authenticator.ftl ═══════════════════════════════════════════ -->
+<p class="hx">select-authenticator.ftl</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass"><img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" /></div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">Try another way</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <form id="kc-select-credential-form" class="kcFormClass" action="#" method="post">
+      <div class="kcSelectAuthListClass">
+        <a class="kcSelectAuthListItemClass" href="#">
+          <div class="kcSelectAuthListItemIconClass"><i class="kcAuthenticatorPasswordClass kcSelectAuthListItemIconPropertyClass" aria-hidden="true"></i></div>
+          <div class="kcSelectAuthListItemBodyClass">
+            <div class="kcSelectAuthListItemHeadingClass">Password</div>
+            <div class="kcSelectAuthListItemDescriptionClass">Sign in by entering your password.</div>
+          </div>
+          <div class="kcSelectAuthListItemFillClass"></div>
+          <div class="kcSelectAuthListItemArrowClass"><i class="kcSelectAuthListItemArrowIconClass" aria-hidden="true"></i></div>
+        </a>
+        <a class="kcSelectAuthListItemClass" href="#">
+          <div class="kcSelectAuthListItemIconClass"><i class="kcAuthenticatorOTPClass kcSelectAuthListItemIconPropertyClass" aria-hidden="true"></i></div>
+          <div class="kcSelectAuthListItemBodyClass">
+            <div class="kcSelectAuthListItemHeadingClass">Authenticator application</div>
+            <div class="kcSelectAuthListItemDescriptionClass">Enter a verification code from authenticator application.</div>
+          </div>
+          <div class="kcSelectAuthListItemFillClass"></div>
+          <div class="kcSelectAuthListItemArrowClass"><i class="kcSelectAuthListItemArrowIconClass" aria-hidden="true"></i></div>
+        </a>
+        <a class="kcSelectAuthListItemClass" href="#">
+          <div class="kcSelectAuthListItemIconClass"><i class="kcAuthenticatorRecoveryAuthnCodesClass kcSelectAuthListItemIconPropertyClass" aria-hidden="true"></i></div>
+          <div class="kcSelectAuthListItemBodyClass">
+            <div class="kcSelectAuthListItemHeadingClass">Recovery authentication code</div>
+            <div class="kcSelectAuthListItemDescriptionClass">Enter a recovery authentication code from a previously generated list.</div>
+          </div>
+          <div class="kcSelectAuthListItemFillClass"></div>
+          <div class="kcSelectAuthListItemArrowClass"><i class="kcSelectAuthListItemArrowIconClass" aria-hidden="true"></i></div>
+        </a>
+      </div>
+    </form>
+  </div>
+</main></div></div>
+
+<!-- ══ error.ftl / info.ftl / terms.ftl + social providers ════════════════ -->
+<p class="hx">error.ftl · info.ftl · terms.ftl · social providers</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainHeader">
+    <header id="kc-header" class="kcHeaderClass"><div id="kc-header-wrapper" class="kcHeaderWrapperClass"><img id="kc-brand-mark" src="../../src/theme/__THEME__/login/resources/img/logo.svg" alt="__BRAND__" /></div></header>
+    <h2 class="kcLoginMainTitle" id="kc-page-title">We are sorry…</h2>
+  </div>
+  <div class="kcLoginMainBody">
+    <div id="kc-error-message">
+      <p class="instruction">This account is not fully set up. Contact an administrator.</p>
+      <a id="backToApplication" class="btn btn-primary" href="#">Back to Application</a>
+    </div>
+
+    <div id="kc-info-message">
+      <p class="instruction">You need to verify your email address to activate your account.</p>
+      <p class="instruction">Didn't receive a verification code in your email? <a href="#">Click here</a> to re-send it.</p>
+    </div>
+
+    <div id="kc-terms-text">By continuing you agree to the terms of service and the acceptable use policy. Long terms wrap here, so this line is deliberately long enough to wrap at phone width.</div>
+    <form class="kcFormClass" action="#" method="post">
+      <div class="kcFormGroupClass">
+        <div id="kc-form-buttons" class="kcFormButtonsClass">
+          <input class="kcButtonClass kcButtonPrimaryClass kcButtonLargeClass" name="accept" id="kc-accept" type="submit" value="Accept">
+          <input class="kcButtonClass kcButtonDefaultClass kcButtonLargeClass" name="cancel" id="kc-decline" type="submit" value="Decline">
+        </div>
+      </div>
+    </form>
+
+    <div id="kc-social-providers" class="kcFormSocialAccountSectionClass">
+      <hr>
+      <h2>Or sign in with</h2>
+      <ul class="kcFormSocialAccountListClass kcFormSocialAccountListGridClass">
+        <li><a id="social-github" class="kcFormSocialAccountListButtonClass kcFormSocialAccountGridItem" href="#"><i class="kcCommonLogoIdP fa fa-github" aria-hidden="true"></i><span class="kcFormSocialAccountNameClass kc-social-icon-text">GitHub</span></a></li>
+        <li><a id="social-google" class="kcFormSocialAccountListButtonClass kcFormSocialAccountGridItem" href="#"><i class="kcCommonLogoIdP fa fa-google" aria-hidden="true"></i><span class="kcFormSocialAccountNameClass kc-social-icon-text">Google</span></a></li>
+      </ul>
+    </div>
+
+    <div class="kcLoginMainFooter">
+      <div class="kcLoginMainFooterBand kc-footer-row">
+        <div class="kcLoginMainFooterBand kc-footer-legal-links">
+          <a href="#" class="kcLoginMainFooterBandItem">Imprint</a>
+          <a href="#" class="kcLoginMainFooterBandItem">Data Protection</a>
+        </div>
+        <div class="kcLoginMainFooterBandItem kc-footer-language">
+          <select aria-label="Languages" id="login-select-toggle" class="kc-language-select">
+            <option selected>English</option><option>Nederlands</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</main></div></div>
+
+<!-- ══ read-only username + restart, and every alert tone ═════════════════ -->
+<p class="hx">username restart · alert tones</p>
+<div class="kcLogin"><div class="kcLoginContainer"><main class="kcLoginMain">
+  <div class="kcLoginMainBody">
+    <div class="kcFormGroupClass">
+      <label for="kc-attempted-username" class="kcLabelClass">Username or email</label>
+      <div class="kcInputGroup">
+        <div class="kcInputGroupItemClass kcFill"><span class="kcInputClass kcFormReadOnlyClass"><input id="kc-attempted-username" value="jane.doe@example.com" readonly></span></div>
+        <div class="kcInputGroupItemClass">
+          <button id="reset-login" class="kcFormPasswordVisibilityButtonClass kc-login-tooltip" type="button" aria-label="Restart login">
+            <svg class="kc-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 2.5a5.5 5.5 0 1 0 5.28 7.06" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 0.6 L10.6 2.5 L8 4.4 Z" fill="currentColor"/></svg>
+            <span class="kc-tooltip-text">Restart login</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="kcAlertClass pf-m-success"><div class="kcAlertIconClass"><span class="kcFeedbackSuccessIcon"></span></div><span class="kcAlertTitleClass">Your password has been updated.</span></div>
+    <div class="kcAlertClass pf-m-warning"><div class="kcAlertIconClass"><span class="kcFeedbackWarningIcon"></span></div><span class="kcAlertTitleClass">Your account is temporarily locked.</span></div>
+    <div class="kcAlertClass pf-m-danger"><div class="kcAlertIconClass"><span class="kcFeedbackErrorIcon"></span></div><span class="kcAlertTitleClass">Invalid username or password.</span></div>
+    <div class="kcAlertClass kcInfo"><div class="kcAlertIconClass"><span class="kcFeedbackInfoIcon"></span></div><span class="kcAlertTitleClass">An email has been sent to you.</span></div>
+    <a id="try-another-way" href="#" class="kcButtonSecondaryClass kcButtonClass kcButtonBlockClass kcMarginTopClass">Try another way</a>
+  </div>
+</main></div></div>
+
+</body>
+</html>

@@ -41,11 +41,11 @@ dirs_of() { (cd "$1" && for d in */; do [ -d "$d" ] && echo "${d%/}"; done | sor
 
 mapfile -t all_themes < <(dirs_of "$src/theme")
 [ "${#all_themes[@]}" -gt 0 ] || { echo "  no themes under src/theme" >&2; exit 1; }
-# A theme that other themes in src/theme inherit from (parent=<it>) is a BASE:
+# A theme marked `x-kte-base=true` (in any of its theme.properties) is a BASE:
 # a source-only layer. It gets no jar of its own — its children are flattened
 # into standalone themes at pack time (tools/flatten-theme.mjs). Name it
 # explicitly to build it anyway.
-is_base() { grep -qs "^[[:space:]]*parent[[:space:]]*=[[:space:]]*$1[[:space:]]*$" "$src"/theme/*/*/theme.properties; }
+is_base() { grep -qs "^[[:space:]]*x-kte-base[[:space:]]*=[[:space:]]*true" "$src/theme/$1"/*/theme.properties; }
 if [ "$#" -gt 0 ]; then themes=("$@")
 else themes=(); for t in "${all_themes[@]}"; do is_base "$t" || themes+=("$t"); done; fi
 for t in "${themes[@]}"; do [ -d "$src/theme/$t" ] || { echo "  no theme src/theme/$t" >&2; exit 2; }; done
@@ -83,8 +83,15 @@ echo "$on_disk" | sed 's/^/  /'
 # say so when it is not. A warning, never a failure — the build must work with
 # no Docker.
 check_nav() {
-    local ours="$1/account/resources/content.json"
-    [ -f "$ours" ] || return 0
+    # The nearest content.json up the theme's parent chain: a child theme (a dark
+    # variant) usually inherits its parent's nav rather than shipping its own.
+    local dir="$1" ours="" p
+    while [ -n "$dir" ] && [ -d "$dir/account" ]; do
+        [ -f "$dir/account/resources/content.json" ] && { ours="$dir/account/resources/content.json"; break; }
+        p="$(sed -n 's/^[[:space:]]*parent[[:space:]]*=[[:space:]]*\([^[:space:]]*\).*/\1/p' "$dir/account/theme.properties" 2>/dev/null | head -1)"
+        [ -n "$p" ] && [ -d "$src/theme/$p" ] && dir="$src/theme/$p" || dir=""
+    done
+    [ -n "$ours" ] || return 0
     command -v docker >/dev/null 2>&1 || { echo "  nav check skipped: no docker"; return; }
     docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$kc_container" \
         || { echo "  nav check skipped: container '$kc_container' not running"; return; }

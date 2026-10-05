@@ -110,7 +110,10 @@
     <#if themeResources?? && themeResources.favicons?has_content>
         <@kteRenderFavicons themeResources.favicons url.resourcesPath />
     <#else>
-        <link rel="icon" type="image/svg+xml" href="${url.resourcesPath}/img/logo.svg" />
+        <#-- x-kte-favicon overrides the icon: a dark variant whose logo is a WHITE cut
+             must point it at a coloured mark, or the tab icon vanishes on a light
+             browser tab strip. -->
+        <link rel="icon" type="image/svg+xml" href="${url.resourcesPath}/${properties["x-kte-favicon"]!"img/logo.svg"}" />
     </#if>
     <#-- Stylesheets and scripts, preferring the `themeResources` model.
          26.7 introduced it and made `properties.styles` / `properties.scripts`

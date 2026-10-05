@@ -7,7 +7,8 @@
   on no other jar, so it can be deployed, moved to another server, rolled back or removed on its
   own. Themes that inherit from a base in the source (environment variants) are flattened into
   their jar by `tools/flatten-theme.mjs`: the base's files and properties are merged in and
-  `parent=` points at Keycloak's built-in theme. The base itself is source-only and gets no jar.
+  `parent=` points at Keycloak's built-in theme. A source-only base (`x-kte-base=true`) gets no
+  jar.
 - `dev/keycloak-compose.yaml`, pinned to production's version.
 - `tools/check-self-contained.mjs`, `tools/audit-coverage.mjs` and `tools/harness/index.html`,
   all passing.

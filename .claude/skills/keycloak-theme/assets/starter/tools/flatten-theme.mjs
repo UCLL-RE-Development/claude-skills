@@ -72,7 +72,10 @@ for (const type of types) {
             // Ancestor first, child last: the child's keys win on load.
             let text = sources.map(s => `# ── from ${relative(themesRoot, s).split('\\').join('/')}\n${readFileSync(s, 'utf8').trimEnd()}\n`).join('\n');
             if (rel === 'theme.properties') {
-                text = text.replace(/^\s*parent\s*[=:].*$/gm, '# (parent flattened into this theme)');
+                text = text.replace(/^\s*parent\s*[=:].*$/gm, '# (parent flattened into this theme)')
+                           // A base's "source-only" marker must not make its
+                           // deployable child look like a base.
+                           .replace(/^\s*x-kte-base\s*[=:].*$/gm, '# (base marker dropped: this theme is deployable)');
                 text += `\n# Flattened by tools/flatten-theme.mjs: standalone, no custom parent.\nparent=${builtinParent || 'base'}\n`;
             }
             writeFileSync(dest, text);

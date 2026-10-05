@@ -72,8 +72,11 @@ src/theme/<Base>Prod/{login,admin}/       theme.properties  parent=<Base>
   badge and eyebrow copy are custom properties rendered with `content: var(--…)`. They cannot be
   translated; say so.
 - **Inheritance is for the source only. The jars are flattened.** `build.sh` merges each child with
-  its base into a standalone `dist/<Child>.jar` (`tools/flatten-theme.mjs`), and the base gets no
-  jar. A deployed jar must never need another jar next to it, so each environment's server gets
+  its base into a standalone `dist/<Child>.jar` (`tools/flatten-theme.mjs`). A theme that exists
+  only to be inherited from is marked **`x-kte-base=true`** in its `theme.properties` and gets no
+  jar. Being a parent is not enough, because a deployable theme can also be a parent: a dark
+  variant (`UcllDark`, `parent=Ucll`) inherits from a theme that still needs its own jar. Chains
+  can be deeper (`AuthDark → MasterDark → Master`), and the flattener follows all of them. A deployed jar must never need another jar next to it, so each environment's server gets
   exactly its own jar. Verified: a fresh Keycloak with only the test variant's jar renders its
   complete sign-in and admin console.
 - **Warning banners belong on the sign-in pages.** That is where someone decides whether they are on

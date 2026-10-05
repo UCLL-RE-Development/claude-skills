@@ -33,7 +33,9 @@
       "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/**)",
       "Bash(curl -s http://localhost:8088/realms/ucll-flows/account/)",
       "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/UcllReMaster/admin/resources/**)",
-      "Bash(cd /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/email; sed -n 1,11p html/template.ftl; sed -n 19,36p html/template.ftl)"
+      "Bash(cd /tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/Ucll/email; sed -n 1,11p html/template.ftl; sed -n 19,36p html/template.ftl)",
+      "Bash(P=/tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes; cd $P/src/theme/UcllRe/account/resources/css; sed -n 618,670p account.css; sed -n 740,760p account.css)",
+      "Read(//tmp/claude/d--Github-claude-skills/55fff38c-ab46-4c5f-9229-e1c78c48443d/scratchpad/ucll-themes/src/theme/UcllRe/account/resources/**)"
     ]
   }
 }

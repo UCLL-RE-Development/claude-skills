@@ -170,6 +170,8 @@ the traps in each reference:
 3. **email**: [email.md](references/email.md). Inline literals from the same sheet, type-only brand.
 4. **admin**, full scope only: [admin.md](references/admin.md), the "full restyle" part. It uses the
    same `--p-*` sheet as account, plus the sidebar tokens.
+5. **dark variants**, when asked: [dark.md](references/dark.md). A separate `<Name>Dark` child
+   theme per theme, always dark (not the visitor's OS), with mails left light.
 
 In **design mode**, also check [what a design cannot change](references/tokens-from-design.md#6-what-a-design-cannot-change-keycloaks-structure)
 and tell the user what will differ from the mock-up before you build it.
@@ -224,6 +226,7 @@ references/
   tokens-from-design.md    Mode B: Figma, Claude Design, token exports, screenshots
   self-contained.md        the embed rule: fonts, images, colours; the mail exception
   login.md  account.md  email.md  admin.md     per-surface procedure and traps
+  dark.md                  separate dark variants: structure, always-dark, dark-only traps
   verify.md                gates, harness, driving it, version drift
   deploy.md                deliverables, deploy checklist, README outline
 scripts/

@@ -47,7 +47,10 @@ const root = document.documentElement;
 // Resolved from this module's own URL, so no theme name or version is
 // hard-coded: …/resources/<ver>/admin/<Theme>/js/admin.js → …/<Theme>/.
 const THEME_BASE = new URL("../", import.meta.url).href;
-const SHEET = new URL("css/admin.css", THEME_BASE).href;
+// Every stylesheet this theme ships (css/admin.css, a dark variant's
+// css/dark.css, an environment's css/env.css …), not only admin.css — the gate
+// must switch them all off together, or a variant's overrides stay on.
+const SHEET_DIR = new URL("css/", THEME_BASE).href;
 const STOCK_LOGO = new URL("logo.svg", THEME_BASE).href; // masthead (keycloak.v2's)
 const STOCK_ICON = new URL("icon.svg", THEME_BASE).href; // dashboard (keycloak.v2's)
 const OWN_LOGO = new URL("img/logo.svg", THEME_BASE).href; // = `logo` in theme.properties
@@ -80,7 +83,7 @@ function apply() {
         root.classList.toggle("kc-unbranded", !on);
     }
     for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
-        if (link.href === SHEET && link.disabled === on) link.disabled = !on;
+        if (link.href.startsWith(SHEET_DIR) && link.disabled === on) link.disabled = !on;
     }
     // Closed: Keycloak's own files. Open again: React may not re-render the
     // <img>, so put the theme's logo back explicitly.

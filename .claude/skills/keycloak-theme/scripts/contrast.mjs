@@ -85,10 +85,16 @@ const PAIRS = [
     ['p-sidebar-ink',  'p-sidebar',   4.5, 'admin nav links (admin.css only)'],
     ['p-sidebar-ink-2','p-sidebar',   4.5, 'admin nav section titles (admin.css only)'],
     ['p-sidebar-accent','p-sidebar',  3.0, 'admin current-item marker (admin.css only)'],
+    ['p-env-marker',   'p-sidebar',   3.0, 'environment current-item marker (environment variants)'],
 ];
 
+// Ink per fill: on a DARK theme one ink cannot sit on every fill — a light
+// hover fill (#8FD3F5) or a pink text colour used as a fill needs DARK ink. A
+// theme declares that with `--<fill>-ink` (e.g. --p-accent-hi-ink: #232325),
+// and the pair is then measured with that ink instead of --p-ink.
 let failed = 0;
-for (const [fg, bg, min, what] of PAIRS) {
+for (let [fg, bg, min, what] of PAIRS) {
+    if (fg === 'p-ink' && `${bg}-ink` in tok) { fg = `${bg}-ink`; what += ' (declared ink for this fill)'; }
     const a = val(fg), b = val(bg);
     if (!(fg in tok) || !(bg in tok)) continue;
     if (!a || !b) { console.log(`SKIP  --${fg} on --${bg}  (not a plain hex: ${tok[fg]} / ${tok[bg]})`); continue; }

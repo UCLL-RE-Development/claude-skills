@@ -76,8 +76,14 @@ headless over the DevTools protocol with no dependencies, can sign in, and can e
 
 ```bash
 node <skill>/scripts/screenshot.mjs --light --shot "<a preview link>" shot.png [--shot <url> <png> …] \
-     [--login tester:test] [--click "<selector>"] [--eval "getComputedStyle(…).color"] [--dark] [--full]
+     [--login tester:test] [--fill "#password=a" --fill "#password-confirm=b"] [--click "<selector>"] \
+     [--eval "getComputedStyle(…).color"] [--dark] [--full]
 ```
+
+`--fill <selector>=<value>` and `--click` run in the order given, so a mismatch is forced as
+`--fill "#password-new=Aa1!aaaa" --fill "#password-confirm=Bb2!bbbb" --click "[type=submit]"`.
+⚠️ The script could not fill before a click at first, so the mismatch state was never forced.
+`--eval` awaits a returned promise (e.g. `document.fonts.ready.then(() => …)`).
 
 Then read the PNG. Read **computed styles** instead of trusting a screenshot when judging a value,
 and

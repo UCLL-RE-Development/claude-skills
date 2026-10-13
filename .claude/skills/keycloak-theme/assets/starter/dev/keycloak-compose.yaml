@@ -50,14 +50,25 @@ services:
       KC_SPI_EMAIL_SMTP_HOST: mailhog
       KC_SPI_EMAIL_SMTP_PORT: 1025
       KC_SPI_EMAIL_SMTP_FROM: "noreply@theme.local"
+      # ⚠️ The public URL Keycloak builds every link and every MAIL image from.
+      # Without it, a mail triggered through kcadm (preview.sh's test mail)
+      # carries the container's own http://localhost:8080: the action link
+      # 404s and the mail logo is a broken image. Production needs the same,
+      # set to its real public URL.
+      KC_HOSTNAME: "http://localhost:${KC_PORT:-8087}"
     ports:
       # 8087 rather than 8080, so this can sit beside anything else already
       # bound there. The app itself talks to its real Keycloak, never to this.
       - "${KC_PORT:-8087}:8080"      # KC_PORT=8088 ./dev/preview.sh to run beside another
     volumes:
-      # Throwaway realm data — gitignore dev/kc-data and delete the directory
-      # to start over.
-      - ./kc-data:/opt/keycloak/data
+      # Throwaway realm data (the H2 database) in a NAMED Docker volume, not a
+      # ./kc-data bind mount. ⚠️ A project in a OneDrive-synced folder would
+      # otherwise sync (and lock) the live database files. Nothing lands in
+      # the repo, so there is nothing to gitignore. To start over:
+      #   docker compose -f dev/keycloak-compose.yaml down -v
+      # which removes only this project's containers and its volume. Never add
+      # --remove-orphans.
+      - __CONTAINER__-data:/opt/keycloak/data
       # src/theme is laid out as a themes directory, so this is the same tree
       # build.sh packs into the jar. No copy to fall out of step.
       - ../src/theme:/opt/keycloak/themes:ro
@@ -69,3 +80,7 @@ services:
     container_name: __CONTAINER__-mail
     ports:
       - "${MAIL_PORT:-8025}:8025"    # MailHog web UI (MAIL_PORT)
+
+volumes:
+  __CONTAINER__-data:
+    name: __CONTAINER__-data

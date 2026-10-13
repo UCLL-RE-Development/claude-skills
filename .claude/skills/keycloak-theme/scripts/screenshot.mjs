@@ -10,6 +10,14 @@
 //             session, so after --login every later shot is signed in.
 //   --click   after the preceding --shot loads, click this CSS selector before
 //             capturing (repeatable; e.g. open a kebab menu, then a dialog)
+//   --fill    <selector>=<value>: after the preceding --shot loads, set that
+//             field's value and fire input + change (repeatable). --fill and
+//             --click run in the order given, so a mismatch is forced as
+//             --fill "#password-new=Aa1!aaaa" --fill "#password-confirm=Bb2!bbbb"
+//             --click "[type=submit]". The selector ends at the first `=` outside
+//             [...], so `input[name=x]=v` works. A checkbox or radio takes
+//             true/false. ⚠️ Without it the error states verify.md asks for
+//             (a password mismatch) could not be forced.
 //   --login   when a Keycloak sign-in form (#username / #password) appears,
 //             fill it and submit. Handles the identity-first two-step form.
 //   --dark    emulate prefers-color-scheme: dark (checks darkMode=false holds)
@@ -20,6 +28,8 @@
 //             action, consent) instead of re-opening the --shot URL
 //   --eval    after the preceding --shot loads, print a JS expression's value,
 //             e.g. "getComputedStyle(document.querySelector('#kc-login')).backgroundColor"
+//             A promise is awaited ("document.fonts.ready.then(() => …)"); an
+//             earlier version printed it as {}.
 //   --wait    ms to let an SPA settle after load (account/admin consoles)
 //
 // Finds the browser in the usual places on Windows, macOS and Linux, or
@@ -36,7 +46,17 @@ const opt = { width: 1440, height: 900, wait: 2500, dark: false, light: false, f
 for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--shot') shots.push({ url: argv[++i], out: argv[++i] });
-    else if (a === '--click') { if (shots.length) (shots.at(-1).clicks ??= []).push(argv[++i]); else i++; }
+    else if (a === '--click') { if (shots.length) (shots.at(-1).actions ??= []).push({ click: argv[++i] }); else i++; }
+    else if (a === '--fill') {
+        const spec = argv[++i] ?? '';
+        // The selector ends at the first `=` outside [...]: input[name=x]=v.
+        let depth = 0, at = -1;
+        for (let k = 0; k < spec.length && at < 0; k++) {
+            if (spec[k] === '[') depth++; else if (spec[k] === ']') depth--; else if (spec[k] === '=' && depth === 0) at = k;
+        }
+        if (at < 1) { console.error(`--fill wants <selector>=<value>, got ${spec}`); process.exit(2); }
+        if (shots.length) (shots.at(-1).actions ??= []).push({ fill: spec.slice(0, at), value: spec.slice(at + 1) });
+    }
     else if (a === '--eval') { if (shots.length) (shots.at(-1).evals ??= []).push(argv[++i]); else i++; }
     else if (a === '--login') opt.login = argv[++i];
     else if (a === '--width') opt.width = +argv[++i];
@@ -174,16 +194,37 @@ async function main() {
         // action, consent), and navigating again would restart that flow.
         const here = await evaluate('location.href');
         if (!opt.stay && !before && signedIn && here !== shot.url) await go(shot.url);
-        // --click: open a menu / modal before capturing (CSS selector, in order).
-        for (const sel of shot.clicks ?? []) {
-            const hit = await evaluate(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return false; el.click(); return true; })()`);
-            if (!hit) console.error(`--click: nothing matches ${sel}`);
+        // --fill / --click, in the order given: fill a form, then submit it;
+        // open a menu / modal before capturing.
+        for (const act of shot.actions ?? []) {
+            if (act.fill) {
+                // The native value setter, so a framework-controlled input (the
+                // account console's React fields) sees the change too.
+                const hit = await evaluate(`(() => {
+                    const el = document.querySelector(${JSON.stringify(act.fill)}); if (!el) return false;
+                    const v = ${JSON.stringify(act.value)};
+                    if (el.type === 'checkbox' || el.type === 'radio') el.checked = v === 'true';
+                    else {
+                        const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement : el instanceof HTMLSelectElement ? HTMLSelectElement : HTMLInputElement;
+                        Object.getOwnPropertyDescriptor(proto.prototype, 'value').set.call(el, v);
+                    }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    return true;
+                })()`);
+                if (!hit) console.error(`--fill: nothing matches ${act.fill}`);
+                continue;
+            }
+            const hit = await evaluate(`(() => { const el = document.querySelector(${JSON.stringify(act.click)}); if (!el) return false; el.click(); return true; })()`);
+            if (!hit) console.error(`--click: nothing matches ${act.click}`);
             await sleep(Math.min(opt.wait, 1500));
         }
         // --eval: print the value of a JS expression in the page, e.g. a
         // computed style — verify.md: measure, do not trust the screenshot.
+        // ⚠️ Awaited: a promise (document.fonts.ready.then(…)) is resolved
+        // before it is printed, rather than stringified as {}.
         for (const expr of shot.evals ?? []) {
-            const v = await evaluate(`(() => { try { return JSON.stringify(eval(${JSON.stringify(expr)})); } catch (e) { return 'ERROR ' + e.message; } })()`);
+            const v = await evaluate(`(async () => { try { return JSON.stringify(await eval(${JSON.stringify(expr)})); } catch (e) { return 'ERROR ' + e.message; } })()`);
             console.log(`eval ${expr}\n  = ${v}`);
         }
         const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: opt.full }, s);

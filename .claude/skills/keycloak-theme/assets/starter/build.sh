@@ -56,7 +56,7 @@ command -v node >/dev/null 2>&1 || { echo "  node is required (gates and the des
 # space-separated (e.g. nav_omitted="applications"). The nav drift check below
 # ignores exactly these. A plain string, not an array: an empty array trips
 # `set -u` on the bash 3.2 that macOS still ships.
-nav_omitted="applications"   # must match what resources/content.json leaves out (the starter drops Applications; ask the user)
+nav_omitted=""   # must match what resources/content.json leaves out (the starter keeps every 26.8 tab; ask the user, e.g. "applications")
 kc_container="${KC_CONTAINER:-__CONTAINER__}"
 
 # ── Descriptor: every theme and its types, exactly as on disk ────────────────
@@ -78,6 +78,10 @@ echo "$on_disk" | sed 's/^/  /'
 # copy of Keycloak's, because the console replaces its nav with ours rather than
 # merging. That makes it the one file here that can silently fall behind: a
 # Keycloak upgrade adding a tab would drop it.
+# ⚠️ The tab set changes per version: 26.6 has `oid4vci` (path oid4vci), 26.8
+# renamed it `verifiableCredentials` (path verifiable-credentials). Both
+# directions are checked: a tab this Keycloak offers that we lack, and a tab we
+# list that this Keycloak does not know (a dead entry from another version).
 #
 # So compare against the running Keycloak's own copy when one is reachable, and
 # say so when it is not. A warning, never a failure — the build must work with
@@ -108,12 +112,13 @@ check_nav() {
 
     # Compare the label sets: ours must be upstream's minus the omitted entries.
     labels() { grep -o '"label"[[:space:]]*:[[:space:]]*"[^"]*"' "$1" | sed 's/.*"\([^"]*\)"$/\1/' | sort; }
-    local missing
+    local missing extra
     missing=$(comm -23 <(labels "$tmp/upstream.json") <(labels "$ours") \
         | { if [ -n "$nav_omitted" ]; then grep -vxF "$(printf '%s\n' $nav_omitted)"; else cat; fi; } || true)
-    if [ -n "$missing" ]; then
-        echo "  ⚠ nav check: this Keycloak offers tabs our content.json does not list:"
-        echo "$missing" | sed 's/^/      /'
+    extra=$(comm -13 <(labels "$tmp/upstream.json") <(labels "$ours") || true)
+    if [ -n "$missing" ] || [ -n "$extra" ]; then
+        [ -n "$missing" ] && { echo "  ⚠ nav check: this Keycloak offers tabs our content.json does not list:"; echo "$missing" | sed 's/^/      /'; }
+        [ -n "$extra" ] && { echo "  ⚠ nav check: our content.json lists tabs this Keycloak does not offer:"; echo "$extra" | sed 's/^/      /'; }
         echo "    Re-derive it from theme/keycloak.v3/account/resources/content.json,"
         echo "    dropping only the entries in nav_omitted (build.sh)."
     else

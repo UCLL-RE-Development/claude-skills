@@ -97,8 +97,8 @@ Keycloak is public anyway, so it can host the mail's images itself:
    then renders `<img src="${url.resourcesUrl}/img/logo.png">`. In a mail template,
    `url.resourcesUrl` is the **absolute public URL** of this email theme's resources (built from
    Keycloak's configured hostname, so set `KC_HOSTNAME` correctly in production).
-3. ⚠️ **The URL contains a version segment** (`/resources/<ver>/email/<Theme>/…`). Measured on 26.6.1:
-   it is stable across restarts, and a request with an **outdated** segment (a mail sent before an
+3. ⚠️ **The URL contains a version segment** (`/resources/<ver>/email/<Theme>/…`). Measured on 26.6.1 and
+   re-confirmed on 26.8.0: it is stable across restarts, and a request with an **outdated** segment (a mail sent before an
    upgrade) answers **307** to the current version and the image loads. So old mails keep their
    logo after an upgrade. (A malformed segment answers 404; real ones redirect.) Re-check this
    after every Keycloak upgrade: request an image under a made-up 5-character segment and expect 307.

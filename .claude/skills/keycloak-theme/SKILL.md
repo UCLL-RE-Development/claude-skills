@@ -133,21 +133,26 @@ remaining types in
 `src/META-INF/keycloak-themes.json`. Then replace every placeholder (the checker fails on any that
 remain):
 
-| Placeholder | Becomes |
-| --- | --- |
-| `__THEME__` | theme name |
-| `__BRAND__` | product display name |
-| `__FONT_UI__`, `__FONT_HEAD__` | font family names |
-| `__FONT_UI_400__`, `_600__`, `_700__` | font file basenames (without `.woff2`) |
-| `__WEB_CLIENT_ID__` | the web client id |
-| `__KC_VERSION__` | production's Keycloak version |
-| `__CONTAINER__` | dev container name, e.g. `<name>-theme-dev` |
-| `__PLACEHOLDER_LOGO__` | (marker inside the placeholder `logo.svg`) replace the file with the real mark |
+| Placeholder | Becomes | Found in (outside the theme folder too) |
+| --- | --- | --- |
+| `__THEME__` | theme name | the `src/theme/__THEME__` folder, `keycloak-themes.json`, `dev/keycloak-compose.yaml`, `tools/harness/index.html`, login/admin files |
+| `__BRAND__` | product display name | every type, `tools/harness/index.html` |
+| `__FONT_UI__`, `__FONT_HEAD__` | font family names | `styles.css`, `account.css`, `admin.css` |
+| `__FONT_UI_400__`, `_600__`, `_700__` | font file basenames (without `.woff2`) | the same stylesheets |
+| `__WEB_CLIENT_ID__` | the web client id | account `theme.properties`, `shell.js` |
+| `__KC_VERSION__` | production's Keycloak version | `dev/keycloak-compose.yaml` |
+| `__CONTAINER__` | dev container name, e.g. `<name>-theme-dev` (also names the `__CONTAINER__-data` volume) | `dev/keycloak-compose.yaml`, `build.sh`, `tools/audit-coverage.mjs` |
+| `__PLACEHOLDER_LOGO__` | (marker inside the placeholder `logo.svg`) replace the file with the real mark | each type's `img/logo.svg` |
 
 Each starter file opens with a "this is the starter, fill in …" header. Rewrite it to describe
 *this* theme, keeping the lessons, so the shipped files do not read as a template (the checker
-warns on leftover headers and on `SOURCE: ?`). The checker scans only the theme. Check the rest of
-the project too: `grep -rn "__[A-Z][A-Z0-9_]*__" dev tools build.sh src/META-INF` must print nothing.
+warns on leftover headers and on `SOURCE: ?`). ⚠️ The checker scans only the theme, and
+`tools/audit-coverage.mjs` and the harness shipped with `__CONTAINER__` / `__THEME__` left in. Check
+the rest of the project too: `grep -rn "__[A-Z][A-Z0-9_]*__" dev tools build.sh src/META-INF` must
+print nothing.
+
+The starter also ships a `.gitattributes` (LF; CRLF breaks `build.sh` in Linux containers). If the
+host repo has one, merge it in instead.
 
 **Several themes in one project** (one per sub-brand, a login-only theme for the master realm,
 environment variants): give each its own folder under `src/theme/`, list every one in
@@ -209,7 +214,8 @@ Write the README next to the theme from the outline in [deploy.md](references/de
 the deploy checklist. Then report in chat:
 
 - **the preview links as a table** (sign in, register, forgot password, account console, admin
-  console, MailHog), with the test logins (`tester` / `test`, `admin` / `admin`) and how to stop it
+  console, MailHog), with the test logins exactly as `preview.sh` printed them (`tester` / `test`,
+  or `tester@theme.local` / `test` with "Email as username"; `admin` / `admin`) and how to stop it
 - what was built (types, theme name, jar size)
 - the token source, and the deviations with their measured numbers
 - the gate results and what was verified live versus not

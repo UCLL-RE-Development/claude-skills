@@ -159,6 +159,19 @@ a "start over" button. A screenshot of page one proves less than it used to. The
 treatment must differ visibly from an editable field. If the palette's field fill equals the card,
 use `--p-quiet`.
 
+## Register: no password field with Verify email on (26.8)
+
+⚠️ On Keycloak 26.8 with **Verify email** on, `register.ftl` renders **no password fields**. The
+password is chosen after the e-mail is confirmed, on the update-password page. The deprecated
+**"Always set password on register form"** switch (Authentication → `registration` flow →
+*Password Validation* step's config, `always_set_password_on_register_form=true`) restores them.
+
+- A design that draws a password (or a strength meter) on register must say which it wants. Ask,
+  and record the answer in the README; do not flip a deprecated switch silently.
+- Style both: the password fields still appear with the switch on or with Verify email off, and
+  the update-password page carries the meter otherwise. To screenshot the register password,
+  switch it on in the **preview realm** only, then remove that config again.
+
 ## Profile questions at registration
 
 Use the declarative **User Profile** (Realm settings → User profile), not a custom form. Keep

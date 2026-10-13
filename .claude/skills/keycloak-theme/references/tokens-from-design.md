@@ -39,6 +39,8 @@ Do not use the `DesignSync` tool for this; it exists for the `/design-sync` work
 1. `action: "list"`, `scope: "files"` on the URL. The artboards are `project/*.dc.html`,
    `project/canvas.json` is the index, and `project/ds/<name>/tokens.json|tokens.css` is the
    installed design system (the best token source: named roles with usage notes and contrast).
+   A canvas may ship no `tokens.css` at all, and may carry a component sheet
+   (`ds/<name>/components/bundle.css`) that artboards link from `<head>`. Read every `ds/` file.
 2. Read `project/canvas.json` and summarise its `pages`, `boards` (titles) and `notes`. Pages and
    filename prefixes usually **are** the options (e.g. `Main` vs `RP-Main` vs `MRL-Main`). Show the
    user the option list and say which theme each option becomes. Several options can be several
@@ -151,6 +153,19 @@ differ:
 - **Pages the design probably does not show:** forgot password, OTP, update password, register,
   errors, info and every alert tone. Apply the same language to them. The coverage audit and
   harness are how you check you did.
+- ⚠️ **A password on the register board.** On 26.8 with "Verify email" on, Keycloak's register
+  form has no password field; it is set after the e-mail is confirmed. Tell the user, and see
+  [login.md](login.md#register-no-password-field-with-verify-email-on-268) for the switch that
+  restores it.
 
 If the design only shows the login screen, apply the same language to the account console and
 the mails, and say that you extended it.
+
+## 7. Design projects on OneDrive
+
+Design-mode projects often sit in a synced folder next to the design export. ⚠️ **A dev compose in
+a OneDrive folder must keep `kc-data` in a named Docker volume**, never a `./kc-data` bind mount:
+OneDrive syncs and locks the live H2 files while Keycloak writes them. The starter's compose uses
+the named volume `__CONTAINER__-data` by default. Start over with `docker compose -f
+dev/keycloak-compose.yaml down -v`. The `.gitattributes` the starter ships (LF) matters here too:
+a synced Windows checkout otherwise hands `build.sh` to the Linux container with CRLF.

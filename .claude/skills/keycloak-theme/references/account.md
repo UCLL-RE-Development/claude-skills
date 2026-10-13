@@ -70,6 +70,21 @@ ramp. Map `--200` → `--p-border-mid` and `--300` → `--p-line`. The theme thi
 from had them swapped, so hairline separators drew in the strong field-border tone. Re-read the
 values from the console's stylesheet after an upgrade.
 
+## ⚠️ The nav: separators on `::before`, the current marker on `::after`
+
+- The rules between nav groups are a 1px border on items' and links' `::before`, whose colour
+  (`--pf-v5-c-nav__item--before--BorderColor`, `__link--before--BorderColor`) the console points
+  at `--pf-v5-global--BackgroundColor--dark-200`: a **ground** token. Map a dark accent there (for
+  tooltips) and the separators draw as heavy navy rules. Re-point both variables at `--p-line`.
+- The current-page marker is PatternFly v5's `::after` (4px start border). The starter coloured
+  `::before`, so the marker stayed PatternFly blue.
+
+## ⚠️ Title weights lose to the size modifier
+
+PatternFly sets the weight per size: `.pf-v5-c-title.pf-m-2xl` is 400, and that two-class selector
+beats a plain `.pf-v5-c-title { font-weight }`. Page titles shipped at 400. Use
+`.pf-v5-c-title[class*="pf-m-"]` (equal specificity, declared later), then the per-size exceptions.
+
 ## ⚠️ Form-control borders are not on the control
 
 PatternFly draws them on two absolutely positioned pseudo-elements at `inset: 0`: `::before` (1px,
@@ -120,8 +135,15 @@ people forget.
 ⚠️ The console **replaces** its nav with yours instead of merging. `content.json` must therefore be
 a **full** copy of Keycloak's own (`theme/keycloak.v3/account/resources/content.json` inside the
 account-ui jar), minus whatever you deliberately remove. **Ask the user what to remove**. A common
-choice is "Applications". `build.sh`'s nav drift check compares it against the running Keycloak and
-warns when an upgrade adds a tab.
+choice is "Applications". List each removed label in `build.sh`'s `nav_omitted`. The starter ships
+26.8's full set, Applications included.
+
+⚠️ **The tab set changes per version.** 26.6 has `oid4vci` (path `oid4vci`); 26.8 renamed it
+`verifiableCredentials` (path `verifiable-credentials`) and moved it after Applications. A
+`content.json` copied from one version shows a dead or missing tab on the other. The starter
+shipped 26.6's copy for 26.8 builds. Re-derive it from the **pinned** version's jar. `build.sh`'s
+nav drift check compares the labels against the running Keycloak in both directions and warns on
+either drift.
 
 ## Organizations and account deletion
 

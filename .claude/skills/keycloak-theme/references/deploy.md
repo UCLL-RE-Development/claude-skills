@@ -25,6 +25,13 @@ verify it locally, and hand it over.
    Remove an old jar of the same theme before copying in a new one. Production caches themes,
    so a running server does not pick up a replaced jar. If the server starts with `--optimized`, a
    new provider jar is ignored until `kc.sh build` is re-run.
+   ⚠️ **An UPDATED jar looks like it did not deploy.** Theme resources are served under
+   `/resources/<code>/…`, and that code changes only with the Keycloak version, not with the jar,
+   while browsers cache them for 30 days (`spi-theme--static-max-age`, default 2592000). Anyone who
+   opened the pages before keeps the old CSS after a correct install and restart. Hit on 26.8.0:
+   the user saw the old admin console after updating, incognito showed the new one. Always check
+   an update in a private window first, and suggest `KC_SPI_THEME__STATIC_MAX_AGE=3600` for
+   servers whose themes still change.
 2. **Realm settings → Themes**: set *Login*, *Account* **and** *Email* to `<Name>`. Email is a
    separate dropdown and easy to miss; with it unset the mails are stock while the login page looks
    perfect.

@@ -388,13 +388,15 @@
                that exists upstream and silently does not exist here is the kind
                of gap nobody discovers until they turn the feature on.
                `switchOrganizationEnabled??` keeps it inert on every older
-               version, where the variable is simply absent. -->
+               version, where the variable is simply absent.
+               ⚠️ A real submit button, not upstream's `<a href="#">` + onclick:
+               the theme ships no `#` links (SKILL.md Step 1), and a button
+               submits without JavaScript. -->
           <#if switchOrganizationEnabled?? && switchOrganizationEnabled>
               <form id="kc-switch-organization-form" action="${url.loginAction}" method="post">
                   <div class="${properties.kcFormGroupClass!}">
                       <input type="hidden" name="switchOrganization" value="true"/>
-                      <a href="#" id="switch-organization"
-                         onclick="document.forms['kc-switch-organization-form'].requestSubmit();return false;">${msg("doSwitchOrganization")}</a>
+                      <button type="submit" id="switch-organization" class="${properties.kcButtonLinkClass!}">${msg("doSwitchOrganization")}</button>
                   </div>
               </form>
           </#if>

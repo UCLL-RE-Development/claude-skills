@@ -19,7 +19,7 @@
 #   <base>/admin/<realm>/console/   as   realm-admin / admin
 #
 # Leaves Keycloak RUNNING so the pages can be looked at. Stop it with:
-#   docker compose -f dev/keycloak-compose.yaml down
+#   docker compose -f dev/keycloak-compose.yaml down        (add -v to start over)
 #
 # Everything here is local and throwaway (admin/admin, a test user with
 # password "test", sslRequired=NONE). Never point it at a real Keycloak.
@@ -83,6 +83,10 @@ has admin   && themes+=(-s "adminTheme=$theme")
 # A type removed from the theme must not stay selected: the realm would point
 # at a theme with no admin type behind it.
 has admin   || themes+=(-s "adminTheme=keycloak.v2")
+# The test user, found by e-mail: ⚠️ with "Email as username" on, Keycloak
+# stores tester@theme.local as the username, so `username=tester` finds nobody
+# and printing "tester" sends people to a login that does not exist.
+tester_id() { kc get users -r "$realm" -q email=tester@theme.local -q exact=true --fields id --format csv --noquotes | tr -d '\r' | head -1; }
 if kc get "realms/$realm" >/dev/null 2>&1; then
     [ "${#themes[@]}" -gt 0 ] && kc update "realms/$realm" "${themes[@]}"
 else
@@ -94,12 +98,16 @@ else
         -s 'smtpServer.host=mailhog' -s 'smtpServer.port=1025' -s 'smtpServer.from=noreply@theme.local' >/dev/null
     kc create users -r "$realm" -s username=tester -s enabled=true -s email=tester@theme.local \
         -s emailVerified=true -s firstName=Test -s lastName=User >/dev/null
-    kc set-password -r "$realm" --username tester --new-password test
+    kc set-password -r "$realm" --userid "$(tester_id)" --new-password test
     # A public client with no PKCE requirement, so login and register can be
     # opened from a plain link (account-console demands a PKCE challenge).
     kc create clients -r "$realm" -s clientId=theme-preview -s publicClient=true \
         -s standardFlowEnabled=true -s "redirectUris=[\"$base/realms/$realm/account/*\"]" >/dev/null
 fi
+# The login to print: read back, never assumed (see tester_id above).
+tid="$(tester_id)"
+tester="$(kc get "users/$tid" -r "$realm" --fields username --format csv --noquotes | tr -d '\r' | head -1)"
+tester="${tester:-tester}"
 
 # The admin theme is resolved from the realm you SIGN IN to. A realm-scoped
 # administrator signs in to the preview realm itself, so its admin console
@@ -116,14 +124,16 @@ if $on_master; then
     master_themes=()
     has login && master_themes+=(-s "loginTheme=$theme")
     has admin && master_themes+=(-s "adminTheme=$theme")
+    has account && master_themes+=(-s "accountTheme=$theme")
     [ "${#master_themes[@]}" -gt 0 ] && kc update realms/master "${master_themes[@]}"
 fi
 
 # ── A real mail through the email theme ─────────────────────────────────────
 mailed=""
 if has email; then
-    uid="$(kc get users -r "$realm" -q username=tester --fields id --format csv --noquotes | tr -d '\r' | head -1)"
-    kc update "users/$uid/execute-actions-email" -r "$realm" -b '["UPDATE_PASSWORD"]' >/dev/null 2>&1 \
+    # ⚠️ Its links and logo use KC_HOSTNAME (the compose file). Without it a
+    # kcadm-triggered mail carries the container's own localhost:8080.
+    kc update "users/$tid/execute-actions-email" -r "$realm" -b '["UPDATE_PASSWORD"]' >/dev/null 2>&1 \
         && mailed="sent (Update password)" || mailed="could not send — check the server log for 'Failed to template email'"
 fi
 
@@ -140,10 +150,11 @@ if has login; then
     echo "  Register           $base/realms/$realm/protocol/openid-connect/registrations?$auth"
     echo "  Forgot password    $base/realms/$realm/login-actions/reset-credentials?client_id=theme-preview"
 fi
-has account && echo "  Account console    $base/realms/$realm/account/        (tester / test)"
+has account && echo "  Account console    $base/realms/$realm/account/        ($tester / test)"
 has email   && echo "  Mail (MailHog)     http://localhost:$mail_port                   test mail: $mailed"
 has admin   && echo "  Admin console      $base/admin/$realm/console/        (realm-admin / admin)"
 $on_master  && echo "  Master sign-in     $base/admin/master/console/        (admin / admin)"
+$on_master && has account && echo "  Master account     $base/realms/master/account/        (admin / admin)"
 echo
 echo "  Pages behind a flow (OTP, recovery codes, …): tools/harness/index.html"
-echo "  Stop:  docker compose -f dev/keycloak-compose.yaml down"
+echo "  Stop:  docker compose -f dev/keycloak-compose.yaml down    (realm data stays in the volume; add -v to drop it)"

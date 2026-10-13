@@ -439,9 +439,23 @@ img.pf-v5-c-brand {
     color: var(--p-text);
     background-color: var(--p-raised);
 }
-.pf-v5-c-nav__item .pf-v5-c-nav__link.pf-m-current::before,
-.pf-v5-c-nav__link[aria-current="page"]::before {
+/* ⚠️ The marker is PatternFly v5's ::AFTER (a 4px start border in the active
+   colour), not ::before; ::before carries the group separators below. The
+   starter styled ::before, so the marker stayed PatternFly blue. */
+.pf-v5-c-nav__item .pf-v5-c-nav__link.pf-m-current::after,
+.pf-v5-c-nav__link[aria-current="page"]::after {
     border-inline-start-color: var(--p-accent);
+}
+/* ⚠️ The separators between nav groups are a 1px border on the items' and
+   links' ::before, coloured `--pf-v5-c-nav__item--before--BorderColor` /
+   `__link--before--BorderColor`, which the console's (dark-by-default) nav
+   points at `--pf-v5-global--BackgroundColor--dark-200`: a GROUND token. With
+   a dark accent mapped there (tooltips), they drew as heavy rules. Re-pointed
+   at the hairline tone; the current item's side rule is ::after and keeps the
+   accent. */
+.pf-v5-c-nav {
+    --pf-v5-c-nav__item--before--BorderColor: var(--p-line);
+    --pf-v5-c-nav__link--before--BorderColor: var(--p-line);
 }
 .pf-v5-c-nav__section-title {
     font: 600 10px/1 var(--p-font-head);
@@ -466,9 +480,17 @@ img.pf-v5-c-brand {
 .pf-v5-c-title,
 h1, h2, h3 {
     font-family: var(--p-font-head);
+    font-weight: 700;
     letter-spacing: normal;
     color: var(--p-text);
 }
+/* ⚠️ PatternFly sets the weight per size modifier (`.pf-v5-c-title.pf-m-2xl`
+   is 400, measured on the page titles), and that two-class selector beats
+   `.pf-v5-c-title` above. The attribute selector matches the modifier's
+   specificity and wins by coming later. Set the weights from the source. */
+.pf-v5-c-title[class*="pf-m-"] { font-weight: 700; }
+.pf-v5-c-title.pf-m-md,
+.pf-v5-c-title.pf-m-lg { font-weight: 600; }
 .pf-v5-c-page__main-section {
     background-color: transparent;
 }

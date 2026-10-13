@@ -45,6 +45,10 @@ A dark theme is chosen by the realm. It must not depend on the visitor's prefere
   (`--p-accent-hi-ink: #232325`), and `contrast.mjs` measures that pair. Do not use a text colour
   as a fill: keep destructive buttons and the current wizard step on the full brand red, not the
   lifted pink text tone.
+- ⚠️ **Naming rule: `--<fill>-ink` is the text ON `--<fill>`, nothing else.** `contrast.mjs`
+  swaps it in for `--p-ink` on that fill (only on `--p-ink` pairs) and prints which ink it used.
+  An `--p-accent-ink` meant as "accent-toned text on the soft tint" was measured on `--p-accent`
+  and failed falsely. Name it after the fill it sits on: `--p-accent-soft-ink`.
 - ⚠️ **The light sheet derives things from "ink is dark":** tooltip grounds, every shadow and the
   dialog backdrop are built from `--p-text`, so on dark they become light veils. Re-derive them
   from black and the border tone. Shadows hardly read on dark, so separate menus and popovers

@@ -10,6 +10,14 @@
 // resolve to a hex colour (color-mix, gradients) are reported as SKIP, not
 // guessed. Exits 1 if any required pair fails.
 //
+// ⚠️ Naming rule, ink per fill: `--<fill>-ink` means "the text colour ON the
+// fill --<fill>", and nothing else. For a pair whose foreground is --p-ink (and
+// only those), a declared `--<fill>-ink` replaces --p-ink: --p-accent-hi-ink
+// is measured on --p-accent-hi. A token that merely LOOKS like that (an
+// accent-toned ink for the soft tint, called --p-accent-ink) is misread as the
+// ink on --p-accent and fails falsely: name it after the fill it sits on
+// (--p-accent-soft-ink). Every --p-ink pair prints which ink it used.
+//
 // Why a script: app palettes are routinely fine at 14px body copy and fail at a
 // 10px label or behind a 13px button label. The deviations table in the theme
 // README must be MEASURED numbers, never estimates.
@@ -91,17 +99,24 @@ const PAIRS = [
 // Ink per fill: on a DARK theme one ink cannot sit on every fill — a light
 // hover fill (#8FD3F5) or a pink text colour used as a fill needs DARK ink. A
 // theme declares that with `--<fill>-ink` (e.g. --p-accent-hi-ink: #232325),
-// and the pair is then measured with that ink instead of --p-ink.
+// and the pair is then measured with that ink instead of --p-ink. Only pairs
+// whose foreground is --p-ink are ever re-pointed (the naming rule above).
 let failed = 0;
 for (let [fg, bg, min, what] of PAIRS) {
-    if (fg === 'p-ink' && `${bg}-ink` in tok) { fg = `${bg}-ink`; what += ' (declared ink for this fill)'; }
+    let declared = false;
+    if (fg === 'p-ink' && `${bg}-ink` in tok) { fg = `${bg}-ink`; declared = true; }
     const a = val(fg), b = val(bg);
     if (!(fg in tok) || !(bg in tok)) continue;
+    if (fg === 'p-ink' || declared) what += declared ? `  [ink: --${fg}, declared for this fill]` : '  [ink: --p-ink]';
     if (!a || !b) { console.log(`SKIP  --${fg} on --${bg}  (not a plain hex: ${tok[fg]} / ${tok[bg]})`); continue; }
     const r = ratio(a, b);
     const ok = r >= min;
     if (!ok) failed++;
     console.log(`${ok ? 'ok  ' : 'FAIL'}  ${r.toFixed(2).padStart(5)}:1  need ${min}  --${fg} ${a} on --${bg} ${b}  — ${what}`);
+    // A declared ink that fails where --p-ink would pass is usually a NAMING
+    // slip, not a contrast defect: say so, but keep the FAIL.
+    if (!ok && declared && val('p-ink') && ratio(val('p-ink'), b) >= min)
+        console.log(`      --p-ink passes here (${ratio(val('p-ink'), b).toFixed(2)}:1). If --${fg} is not the text ON --${bg}, rename it after the fill it sits on (e.g. --${bg}-soft-ink).`);
 }
 // Decorative-only tokens: print, so the README can say "rules only".
 for (const t of ['p-alert', 'p-online', 'p-warn', 'p-text-faint']) {
